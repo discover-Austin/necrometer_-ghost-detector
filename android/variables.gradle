@@ -14,9 +14,10 @@ ext {
     androidxEspressoCoreVersion = '3.6.1'
     cordovaAndroidVersion = '10.1.1'
 
-    // Signingautomate 
-    releaseKeystorePath = "../android/keystore/my-release-key.jks"
-    releaseKeystorePassword = "KeyPass1!"
-    releaseKeyAlias = "necrometer_key"
-    releaseKeyPassword = "KeyPass1!"
+    // Signing: read sensitive values from environment variables when available.
+    // These fall back to the previous defaults only for local debug convenience.
+    releaseKeystorePath = System.getenv("RELEASE_KEYSTORE_PATH") ?: "../android/keystore/my-release-key.jks"
+    releaseKeystorePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: "KeyPass1!"
+    releaseKeyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: "necrometer_key"
+    releaseKeyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: "KeyPass1!"
 }

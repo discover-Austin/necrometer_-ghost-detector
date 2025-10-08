@@ -18,10 +18,18 @@ android {
     }
     signingConfigs {
         release {
-            storeFile file(rootProject.ext.releaseKeystorePath)
-            storePassword rootProject.ext.releaseKeystorePassword
-            keyAlias rootProject.ext.releaseKeyAlias
-            keyPassword rootProject.ext.releaseKeyPassword
+            // Only configure signing if a keystore exists at the configured path.
+            def keystorePath = rootProject.ext.releaseKeystorePath
+            if (keystorePath && file(keystorePath).exists()) {
+                storeFile file(keystorePath)
+                storePassword rootProject.ext.releaseKeystorePassword
+                keyAlias rootProject.ext.releaseKeyAlias
+                keyPassword rootProject.ext.releaseKeyPassword
+            } else {
+                // No release keystore present; release builds will use debug signing unless
+                // an external signing step is provided in CI with the proper keystore.
+                println "WARNING: Release keystore not found at ${keystorePath}. Release builds will be unsigned."
+            }
         }
     }
     buildTypes {

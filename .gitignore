@@ -12,6 +12,9 @@ dist
 dist-ssr
 *.local
 
+# Android keystore (keep out of VCS)
+android/keystore/
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
