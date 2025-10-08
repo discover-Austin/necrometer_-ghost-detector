@@ -61,6 +61,16 @@ export class VisionComponent implements OnInit, OnDestroy {
     sceneRepulsion: 0.0001, // Reduced force for a more subtle push
     sceneRepulsionRadius: 12,   // Increased radius for a wider, gentler interaction field
   };
+
+  // Reaction & tuning knobs
+  private reactionConfig = {
+    emfShockThreshold: 80, // EMF above this triggers a strong reaction
+    shockMouthOpen: 1.0,
+    shockLimbBoost: 1.8,
+    shockDurationMs: 1200,
+    blinkSuppressMs: 800,
+    interactionAgitationMultiplier: 2.5,
+  };
   
   constructor() {
     effect(() => {
@@ -493,8 +503,8 @@ export class VisionComponent implements OnInit, OnDestroy {
       let closestEntity: AREntity | null = null;
       let minDistance = 15; // Targeting threshold in viewport % units
 
-  const emfReading = this.deviceState.emfReading();
-  const now = Date.now();
+    const emfReading = this.deviceState.emfReading();
+    const now = Date.now();
       
       const updatedEntities = entities.map(e => {
         let { x, y, vx, vy, ax, ay, interactionTime } = e;
@@ -547,6 +557,18 @@ export class VisionComponent implements OnInit, OnDestroy {
         const agitation = emfReading * this.physics.emfAgitation;
         ax += (Math.random() - 0.5) * agitation;
         ay += (Math.random() - 0.5) * agitation;
+
+        // EVENT-DRIVEN REACTIONS: EMF shock and recent interactions
+        let mouthOpenTarget = 0;
+        if (emfReading >= this.reactionConfig.emfShockThreshold) {
+          // Strong reaction: force mouth open and increase limb swing and agitation
+          mouthOpenTarget = this.reactionConfig.shockMouthOpen;
+          // apply immediate jitter
+          ax += (Math.random() - 0.5) * agitation * this.reactionConfig.shockLimbBoost;
+          ay += (Math.random() - 0.5) * agitation * this.reactionConfig.shockLimbBoost;
+          // stamp a temporary marker so UI can use it (interactionTime)
+          interactionTime = now;
+        }
         
         // 4. Repulsion from scene objects
         let hasInteractedThisFrame = false;
@@ -562,7 +584,7 @@ export class VisionComponent implements OnInit, OnDestroy {
                   hasInteractedThisFrame = true;
                   const forceMagnitude = (this.physics.sceneRepulsionRadius - distance) * this.physics.sceneRepulsion;
                   
-                  // Play sound with a cooldown
+                    // Play sound with a cooldown
                   if (!interactionTime || now - interactionTime > 500) {
                       this.audioService.playInteractionHum();
                       interactionTime = now;
@@ -581,7 +603,7 @@ export class VisionComponent implements OnInit, OnDestroy {
           }
         }
         
-        // --- PHYSICS INTEGRATION ---
+  // --- PHYSICS INTEGRATION ---
         
         vx += ax;
         vy += ay;
@@ -643,7 +665,9 @@ export class VisionComponent implements OnInit, OnDestroy {
 
   // Facial expressions: blink periodically and mouth open based on instability/EMF
   const blink = Math.max(0, Math.min(1, (Math.sin(bobPhase * 0.5 + vel * 5) * 0.5 + 0.5) * 0.2 - (e.instability || 0) * 0.001));
-  const mouthOpen = Math.max(0, Math.min(1, Math.abs(Math.sin(bobPhase * 0.7)) * 0.2 + (e.instability || 0) * 0.003 + emfReading * 0.0005));
+  // Blend in any reaction-driven mouth open target (smooth transition)
+  const baseMouth = Math.max(0, Math.min(1, Math.abs(Math.sin(bobPhase * 0.7)) * 0.2 + (e.instability || 0) * 0.003 + emfReading * 0.0005));
+  const mouthOpen = Math.max(0, Math.min(1, baseMouth + (mouthOpenTarget || 0) * 0.8));
 
   const updatedEntity = { ...e, x, y, vx, vy, ax, ay, interactionTime, isInteracting: hasInteractedThisFrame, occluded, occlusionLevel, bobPhase, scale, rotation,
         leftArmAngle, rightArmAngle, leftLegAngle, rightLegAngle, blink, mouthOpen };
