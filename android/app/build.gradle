@@ -26,9 +26,15 @@ android {
                 keyAlias rootProject.ext.releaseKeyAlias
                 keyPassword rootProject.ext.releaseKeyPassword
             } else {
-                // No release keystore present; release builds will use debug signing unless
-                // an external signing step is provided in CI with the proper keystore.
-                println "WARNING: Release keystore not found at ${keystorePath}. Release builds will be unsigned."
+                // If CI requests signing but no keystore is present, fail fast to avoid
+                // producing an unsigned release artifact.
+                def ciRequestSigning = System.getenv('CI_REQUEST_SIGNING')
+                if (ciRequestSigning == 'true') {
+                    logger.error("RELEASE KEYSTORE MISSING: expected at ${keystorePath}. Aborting because CI_REQUEST_SIGNING=true")
+                    throw new org.gradle.api.GradleException("Release keystore not found at ${keystorePath} but CI_REQUEST_SIGNING=true")
+                } else {
+                    logger.warn("Release keystore not found at ${keystorePath}. Release builds will be unsigned unless a keystore is provided.")
+                }
             }
         }
     }

@@ -59,3 +59,34 @@ jobs:
         with:
           name: app-release-aab
           path: android/app/build/outputs/bundle/release/app-release.aab
+
+      - name: Prepare Google Play service account
+        if: secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != ''
+        run: |
+          echo "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" > $HOME/gplay-service-account.json
+
+      - name: Publish to Google Play (internal)
+        if: secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != ''
+        uses: r0adkll/upload-google-play@v1
+        with:
+          serviceAccountJson: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
+          packageName: com.ghosted_necrometer.app
+          releaseFiles: android/app/build/outputs/bundle/release/app-release.aab
+          track: ${{ env.PLAY_TRACK || 'internal' }}
+
+      - name: Create GitHub Release (fallback)
+        if: secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON == ''
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.ref_name || 'unsigned-release' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Upload AAB to GitHub Release (fallback)
+        if: secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON == ''
+        uses: actions/upload-release-asset@v2
+        with:
+          upload_url: ${{ steps.create_release.outputs.upload_url }}
+          asset_path: android/app/build/outputs/bundle/release/app-release.aab
+          asset_name: app-release.aab
+          asset_content_type: application/octet-stream
