@@ -1,0 +1,34 @@
+{
+  "name": "necrometer",
+  "version": "1.0.0",
+  "description": "A sophisticated paranormal activity scanner.",
+  "scripts": {
+    "build": "npx -p @angular/cli@^20 ng build",
+    "sync:android": "npx cap sync android",
+    "open:android": "npx cap open android"
+  },
+  "dependencies": {
+    "@angular/build": "^20.3.0",
+    "@angular/cli": "^20.3.0",
+    "@angular/common": "^20.3.0",
+    "@angular/compiler": "^20.3.0",
+    "@angular/compiler-cli": "^20.3.0",
+    "@angular/core": "^20.3.0",
+    "@angular/platform-browser": "^20.3.0",
+    "@capacitor-community/camera-preview": "^7.0.0",
+    "@capacitor/android": "^7.4.3",
+    "@capacitor/app": "^7.0.0",
+    "@capacitor/core": "^7.4.3",
+    "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/ios": "^7.4.3",
+    "@capacitor/splash-screen": "^7.0.0",
+    "@google/genai": "^1.22.0",
+    "capacitor-voice-recorder": "^6.1.0-2",
+    "rxjs": "^7.8.2",
+    "tailwindcss": "latest"
+  },
+  "devDependencies": {
+    "@capacitor/cli": "^7.4.3",
+    "typescript": "~5.8.0"
+  }
+}
