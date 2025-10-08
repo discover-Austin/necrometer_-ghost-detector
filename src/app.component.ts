@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, inject, AfterViewInit, OnDestroy, computed, effect, ViewChild, ElementRef, Renderer2 } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, AfterViewInit, OnDestroy, computed, effect, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScannerComponent } from './components/scanner/scanner.component';
 import { LogbookComponent } from './components/logbook/logbook.component';
@@ -15,7 +15,7 @@ import { CameraPreview, CameraPreviewOptions } from '@capacitor-community/camera
 import { AudioService } from './services/audio.service';
 import { PersistenceService } from './services/persistence.service';
 import { SensorService } from './services/sensor.service';
-import { PluginListenerHandle } from '@capacitor/core';
+import { PluginListenerHandle, Capacitor } from '@capacitor/core';
 import { App } from '@capacitor/app';
 
 type View = 'scanner' | 'vision' | 'logbook' | 'evp' | 'echoes' | 'store';
@@ -43,7 +43,6 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   detections = signal<DetectedEntity[]>(this.persistenceService.loadDetections());
   isLoading = signal(false);
   error = signal<string | null>(null);
-  manifestationImage = signal<string | null>(null);
   cameraPermissionError = signal<string | null>(null);
   
   private geminiService = inject(GeminiService);
@@ -62,18 +61,15 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       this.audioService.updateStaticLevel(this.deviceState.emfReading());
     });
 
-    // Save detections to local storage whenever they change
     effect(() => {
       this.persistenceService.saveDetections(this.detections());
     });
 
-    // Animate view changes
     effect(() => {
-      this.activeView(); // depend on activeView
+      this.activeView();
       if (this.mainContentRef) {
         const element = this.mainContentRef.nativeElement;
         element.classList.remove('view-fade-in');
-        // Trigger reflow to restart animation
         void element.offsetWidth; 
         element.classList.add('view-fade-in');
       }
@@ -81,6 +77,11 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   async ngAfterViewInit() {
+    await this.initializeApp();
+  }
+
+  private async initializeApp() {
+    await this.configureProxy();
     await SplashScreen.hide();
     await this.startCamera();
     await this.sensorService.start();
@@ -89,6 +90,15 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         this.startCamera();
       }
     });
+  }
+
+  private async configureProxy() {
+    const platform = Capacitor.getPlatform();
+    const localIp = '192.168.1.45'; 
+    const baseUrl = platform === 'web' ? 'http://localhost:4000' : `http://${localIp}:4000`;
+    const issuanceToken = 'replace-me-with-issuance-secret';
+
+    await this.geminiService.authenticateWithProxy(baseUrl, issuanceToken);
   }
 
   ngOnDestroy() {
@@ -118,7 +128,6 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     };
 
     try {
-      // First, try to get the rear camera
       await attemptStart('rear');
       this.isCameraActive = true;
       this.cameraPermissionError.set(null);
@@ -126,28 +135,22 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       const rearErrorMessage = rearError instanceof Error ? rearError.message : String(rearError);
       
       if (rearErrorMessage.toLowerCase().includes('requested device not found')) {
-        console.warn("Rear camera not found, attempting front camera.");
         try {
-          // Fallback to the front camera
           await attemptStart('front');
           this.isCameraActive = true;
           this.cameraPermissionError.set(null);
         } catch (frontError) {
            const frontErrorMessage = frontError instanceof Error ? frontError.message : String(frontError);
            if (frontErrorMessage.toLowerCase().includes('requested device not found')) {
-              // If front camera also fails with "not found", gracefully fail without an error overlay.
-              // This is common in web/dev environments.
-              console.warn("No camera device found (tried rear and front). Proceeding without camera preview.");
+              console.warn("No camera device found. Proceeding without camera preview.");
               this.isCameraActive = false;
-              this.cameraPermissionError.set(null); // Ensure no error is shown
+              this.cameraPermissionError.set(null);
            } else {
-             // It was a different error with the front camera (like permissions)
              console.error("Error starting front camera preview:", frontError);
              this.handleCameraError(frontError);
            }
         }
       } else {
-        // Handle other errors from the rear camera attempt (like permission denied)
          console.error("Error starting rear camera preview:", rearError);
         this.handleCameraError(rearError);
       }
@@ -219,6 +222,10 @@ export class AppComponent implements AfterViewInit, OnDestroy {
 
   hasNewDetections = signal(false);
 
+  // Privacy modal state
+  privacyVisible = signal(false);
+  privacyContent = signal('Loading privacy policy...');
+
   trackNewDetection() {
     if (this.activeView() !== 'logbook') {
       this.hasNewDetections.set(true);
@@ -232,7 +239,24 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.hasNewDetections.set(false);
   }
 
-  // Global visual effects driven by EMF reading
+  async openPrivacy() {
+    this.privacyVisible.set(true);
+    // attempt to fetch PRIVACY.md from the app root
+    try {
+      const resp = await fetch('/assets/PRIVACY.md');
+      if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const text = await resp.text();
+      this.privacyContent.set(text);
+    } catch (err) {
+      console.warn('Could not load privacy file:', err);
+      this.privacyContent.set('Privacy policy could not be loaded. Please contact the developer at built.to.cell@gmail.com');
+    }
+  }
+
+  closePrivacy() {
+    this.privacyVisible.set(false);
+  }
+
   globalStaticOpacity = computed(() => {
     const reading = this.deviceState.emfReading();
     if (reading < 20) return 0;

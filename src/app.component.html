@@ -1,14 +1,13 @@
 <!-- Main container with global camera background -->
-<div id="camera-container" class="relative flex flex-col h-screen max-w-md mx-auto bg-black border-x-2 border-[var(--color-primary-500)]/20 shadow-2xl shadow-[var(--color-primary-500)]/20 overflow-hidden">
+<div id="camera-container" 
+     class="relative flex flex-col h-screen max-w-md mx-auto bg-black border-x-2 border-[var(--color-primary-500)]/20 shadow-2xl shadow-[var(--color-primary-500)]/20 overflow-hidden"
+     [class.camera-hidden]="activeView() !== 'vision'">
   
   <!-- The native camera preview renders behind this container -->
 
   <!-- Camera Permission Error Overlay -->
   @if (cameraPermissionError()) {
     <div class="absolute inset-0 z-50 flex flex-col items-center justify-center bg-black/90 p-8 text-center">
-      <svg class="w-16 h-16 text-red-500 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126zM12 15.75h.007v.008H12v-.008z" />
-      </svg>
       <h2 class="text-2xl font-bold text-red-400 mb-2">Camera Access Required</h2>
       <p class="text-gray-300 mb-6">{{ cameraPermissionError() }}</p>
       <button (click)="startCamera()" class="px-6 py-3 bg-[var(--color-primary-600)] hover:bg-[var(--color-primary-500)] text-white font-bold rounded-lg transition-colors">
@@ -87,6 +86,25 @@
         <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
         <span class="text-xs">Echoes</span>
       </button>
+      <button (click)="openPrivacy()" class="flex flex-col items-center w-full py-2 transition-colors duration-200 text-xs text-gray-400 hover:text-[var(--color-primary-300)]">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20.5a8.5 8.5 0 100-17 8.5 8.5 0 000 17z" /></svg>
+        <span class="text-xs">Privacy</span>
+      </button>
     </footer>
   </div>
 </div>
+
+<!-- Privacy modal -->
+@if (privacyVisible()) {
+  <div class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4">
+    <div class="max-w-3xl w-full max-h-[90vh] overflow-auto bg-gray-900 border-2 border-[var(--color-primary-500)]/30 rounded-md p-4">
+      <div class="flex justify-between items-start mb-3">
+        <h2 class="text-2xl font-bold text-[var(--color-primary-400)]">Privacy Policy</h2>
+        <button (click)="closePrivacy()" class="text-gray-300 hover:text-white">Close</button>
+      </div>
+      <div class="prose prose-invert text-sm whitespace-pre-wrap">
+        <pre class="whitespace-pre-wrap text-xs text-gray-200">{{ privacyContent() }}</pre>
+      </div>
+    </div>
+  </div>
+}
