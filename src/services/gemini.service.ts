@@ -2,8 +2,7 @@ import { Injectable } from '@angular/core';
 import { GoogleGenAI, Type } from "@google/genai";
 import { EntityProfile, TemporalEcho, EVPAnalysis, DetectedEntity, CrossReferenceResult, EmotionalResonanceResult, ContainmentRitual, SceneAnalysisResult, SceneObject } from '../types';
 
-// A default fallback glyph in case image generation fails
-const FALLBACK_GLYPH_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAIrSURBVHhe7ZtNattAEID7/9+dFbSIIiJaNs06h5L2Wk2zJ5NCS80rFeLz4eG/4K+gKwhKBISKgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQITw3wL8/vmx0+l0vV7/8Xg8Ho/HZDI5OTkRgZfL5XA4lMvl4+PjTqfT6XQ+n//1eDyZTAY4f2S5XF6v1/P5/Gaz+fPz89ls9vf3d7/f/08G2Gw2nU7n8/kymczn87e3t3e7XZ/P93q9brdbn8/3er0+n++3f/p/Axyfz/d6vW63W5/P93q9brfL5XKpVCoVCoXC4fD1+z/9ZwAul8vlcvl8vslk8ng8zWYz4P9I0+k0mUwul8vlcnk8Hm82m1KpFAqFw+Hw+vo6kP+Pfr+fTqdzOBwOh8PpdDgcDpVKhUKhUqlUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKh8N8T/sFj4iwy+vRp2oAAAAASUVORK5CYII=';
+const FALLBACK_GLYPH_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAIrSURBVHhe7ZtNattAEID7/9+dFbSIIiJaNs06h5L2Wk2zJ5NCS80rFeLz4eG/4K+gKwhKBISKgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQITw3wL8/vmx0+l0vV7/8Xg8Ho/HZDI5OTkRgZfL5XA4lMvl4+PjTqfT6XQ+n//1eDyZTAY4f2S5XF6v1/P5/Gaz+fPz89ls9vf3d7/f/08G2Gw2nU7n8/kymczn87e3t3e7XZ/P93q9brdbn8/3er0+n++3f/p/Axyfz/d6vW63W5/P93q9brfL5XKpVCoVCoXC4fD1+z/9ZwAul8vlcvl8vslk8ng8zWYz4P9I0+k0mUwul8vlcnk8Hm82m1KpFAqFw+Hw+vo6kP+Pfr+fTqdzOBwOh8PpdDgcDpVKhUKhUqlUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUqlUKhUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKh8N8T/sFj4iwy+vRp2oAAAAASUVORK5CYII=';
 
 @Injectable({
   providedIn: 'root',
@@ -11,12 +10,10 @@ const FALLBACK_GLYPH_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNS
 export class GeminiService {
   private ai?: GoogleGenAI;
   private apiKey?: string;
-  // Optional server-side proxy configuration
   private proxyBaseUrl: string | null = null;
   private proxyToken: string | null = null;
 
   constructor() {
-    // Try several locations for an API key (server env, window.__env, localStorage) but do not fallback to mocks.
     let key: string | undefined;
     try {
       if (typeof process !== 'undefined' && (process as any).env && (process as any).env.API_KEY) {
@@ -41,12 +38,10 @@ export class GeminiService {
       this.apiKey = key;
       this.ai = new GoogleGenAI({ apiKey: key });
     } else {
-      // Not configured yet. Consumers must call setApiKey() or configure the environment.
-      console.warn('GeminiService: API key not configured. Call setApiKey(apiKey) before using the service.');
+      console.warn('GeminiService: API key not configured.');
     }
   }
 
-  /** Set API key at runtime (useful for web clients). This will instantiate the GoogleGenAI client. */
   setApiKey(apiKey: string, persist = false) {
     if (!apiKey || typeof apiKey !== 'string') throw new Error('Invalid API key');
     this.apiKey = apiKey;
@@ -56,20 +51,41 @@ export class GeminiService {
     }
   }
 
-  /** Configure a server-side proxy (base URL) and shared bearer token. When configured, some requests will be routed through the proxy. */
   setProxyConfig(baseUrl: string, token: string) {
     this.proxyBaseUrl = baseUrl.replace(/\/$/, '');
     this.proxyToken = token;
   }
 
+  async authenticateWithProxy(baseUrl: string, issuanceToken: string) {
+    const fullUrl = `${baseUrl.replace(/\/$/, '')}/issue-token`;
+    try {
+      const resp = await fetch(fullUrl, {
+        method: 'POST',
+        headers: { 'Authorization': `Bearer ${issuanceToken}` },
+      });
+      if (!resp.ok) {
+        const errorText = await resp.text();
+        throw new Error(`Failed to get proxy token: ${resp.status} - ${errorText}`);
+      }
+      const { token } = await resp.json();
+      if (!token) {
+        throw new Error('No token received from proxy');
+      }
+      this.setProxyConfig(baseUrl, token);
+    } catch (error) {
+      console.error('Failed to authenticate with proxy server:', error);
+      this.proxyBaseUrl = null;
+      this.proxyToken = null;
+    }
+  }
+
   private ensureConfigured() {
     if (!this.ai) {
-      throw new Error('GeminiService not configured: API key missing. Call setApiKey(apiKey) or set API_KEY in the environment.');
+      throw new Error('GeminiService not configured: API key missing.');
     }
   }
 
   async getEntityProfile(strength: 'weak' | 'moderate' | 'strong' | 'critical'): Promise<EntityProfile> {
-    // Use proxy endpoint if configured
     if (this.proxyBaseUrl && this.proxyToken) {
       const resp = await fetch(`${this.proxyBaseUrl}/api/generate-entity-profile`, {
         method: 'POST',
@@ -82,7 +98,6 @@ export class GeminiService {
     this.ensureConfigured();
     const strengthDescription = this.getStrengthDescription(strength);
     const profilePrompt = `Generate a short, spooky, and mysterious profile for a paranormal entity. The energy signature is ${strengthDescription}. The profile must include a plausible name, a type (e.g., Poltergeist, Shade, Revenant, Wraith, Banshee, Phantom, Lingering Spirit), a one-paragraph backstory, and an 'instability' rating (a number from 50 to 100). The entity is not yet 'contained'. Do not use markdown.`;
-    // Call the real API and propagate errors to callers (no mocks returned here)
     const profileResponse = await this.ai!.models.generateContent({
       model: 'gemini-2.5-flash',
       contents: profilePrompt,
@@ -91,11 +106,11 @@ export class GeminiService {
         responseSchema: {
           type: Type.OBJECT,
           properties: {
-            name: { type: Type.STRING, description: 'The name of the entity.' },
-            type: { type: Type.STRING, description: 'The classification of the spirit.' },
-            backstory: { type: Type.STRING, description: 'A short, unsettling backstory.' },
-            instability: { type: Type.NUMBER, description: 'A rating from 50-100 of how unstable the entity is.'},
-            contained: { type: Type.BOOLEAN, description: 'Always false for new entities.'}
+            name: { type: Type.STRING },
+            type: { type: Type.STRING },
+            backstory: { type: Type.STRING },
+            instability: { type: Type.NUMBER },
+            contained: { type: Type.BOOLEAN }
           },
           required: ['name', 'type', 'backstory', 'instability', 'contained'],
         },
@@ -107,7 +122,6 @@ export class GeminiService {
     const jsonText = profileResponse.text.trim();
     const profileData = JSON.parse(jsonText) as Omit<EntityProfile, 'glyphB64'>;
 
-    // Now generate the glyph image based on the profile
     const glyphPrompt = `Create a single, minimalist, arcane, mystical sigil or glyph that represents a paranormal entity. The entity is a "${profileData.type}" known as "${profileData.name}". The glyph should be a stark white design on a pure black background. It should look ancient and mysterious. It should not be a picture of the entity, but a symbolic representation.`;
 
     const imageResponse = await this.ai!.models.generateImages({
@@ -135,7 +149,6 @@ export class GeminiService {
 
     const textPart = { text: prompt };
 
-    // Prefer proxy if configured
     if (this.proxyBaseUrl && this.proxyToken) {
       const resp = await fetch(`${this.proxyBaseUrl}/api/analyze-scene`, {
         method: 'POST',
@@ -199,8 +212,8 @@ export class GeminiService {
           responseSchema: {
             type: Type.OBJECT,
             properties: {
-              transcription: { type: Type.STRING, description: 'The deciphered ghostly phrase.' },
-              confidence: { type: Type.NUMBER, description: 'The confidence score of the analysis.' },
+              transcription: { type: Type.STRING },
+              confidence: { type: Type.NUMBER },
             },
             required: ['transcription', 'confidence'],
           },
@@ -213,7 +226,6 @@ export class GeminiService {
 
   async getTemporalEcho(): Promise<TemporalEcho> {
     const prompt = `Generate a "temporal echo" from a haunted location. This is a brief, one-paragraph description of a dramatic, tragic, or emotionally charged historical event that could leave a spiritual residue. Be vague about the exact location, but specific about the emotions and actions. Provide a title for the event and the historical era (e.g., 'Victorian', 'Prohibition', 'Colonial').`;
-    // Use proxy if available
     if (this.proxyBaseUrl && this.proxyToken) {
       const resp = await fetch(`${this.proxyBaseUrl}/api/temporal-echo`, {
         method: 'POST',
@@ -232,9 +244,9 @@ export class GeminiService {
          responseSchema: {
            type: Type.OBJECT,
            properties: {
-             title: { type: Type.STRING, description: 'The title of the historical event.' },
-             era: { type: Type.STRING, description: 'The historical era of the event.' },
-             description: { type: Type.STRING, description: 'The one-paragraph description of the echo.' },
+             title: { type: Type.STRING },
+             era: { type: Type.STRING },
+             description: { type: Type.STRING },
            },
            required: ['title', 'era', 'description'],
          },

@@ -1,0 +1,201 @@
+/* Full-screen overlay for the onboarding experience */
+.onboarding-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.95);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 1000;
+  color: #00ffcc; /* Teal glowing text */
+  font-family: 'Courier New', Courier, monospace;
+  animation: fadeIn 0.5s ease-in-out;
+}
+
+/* Main container for the onboarding content */
+.onboarding-container {
+  width: 90%;
+  max-width: 400px;
+  text-align: center;
+  padding: 20px;
+  border: 1px solid #00ffcc;
+  box-shadow: 0 0 15px #00ffcc;
+  background-color: #0a0a0a;
+}
+
+/* Slides container to manage slide transitions */
+.slides-container {
+  display: flex;
+  overflow: hidden;
+  position: relative;
+  width: 100%;
+  height: 200px; /* Fixed height for the content area */
+}
+
+/* Individual slide styling */
+.slide {
+  flex: 0 0 100%;
+  width: 100%;
+  transition: transform 0.4s ease-in-out;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0 10px;
+}
+
+.slide h2 {
+  margin-bottom: 15px;
+  font-size: 1.5em;
+  text-shadow: 0 0 5px #00ffcc;
+}
+
+.slide p {
+  font-size: 1em;
+  line-height: 1.4;
+  color: #aaffef;
+}
+
+/* Container for the CSS icons */
+.icon-container {
+  height: 60px;
+  width: 60px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 20px;
+  color: #00ffcc;
+}
+
+/* Radar Icon */
+.radar {
+  width: 60px;
+  height: 60px;
+  border: 2px solid currentColor;
+  border-radius: 50%;
+  position: relative;
+  animation: radar-pulse 2s infinite;
+}
+.radar::before, .radar::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 2px solid currentColor;
+  border-radius: 50%;
+}
+.radar::before {
+  width: 30px;
+  height: 30px;
+}
+.radar::after {
+  width: 8px;
+  height: 8px;
+  background-color: currentColor;
+}
+
+/* Ghost Icon */
+.ghost {
+  width: 40px;
+  height: 50px;
+  background-color: currentColor;
+  border-top-left-radius: 20px;
+  border-top-right-radius: 20px;
+  position: relative;
+}
+.ghost::before {
+  content: '';
+  position: absolute;
+  bottom: -10px;
+  left: 0;
+  width: 100%;
+  height: 10px;
+  background: #0a0a0a;
+  border-radius: 0 0 10px 10px;
+}
+.ghost::after {
+    content: '..';
+    position: absolute;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    color: #0a0a0a;
+    font-size: 24px;
+    line-height: 1;
+}
+
+/* Shield Alert Icon */
+.shield-alert {
+  width: 45px;
+  height: 50px;
+  border: 3px solid currentColor;
+  border-radius: 5px;
+  position: relative;
+}
+.shield-alert::before {
+  content: '!';
+  font-size: 30px;
+  font-weight: bold;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+}
+
+/* Styling for navigation dots */
+.dots {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 20px;
+}
+
+.dots span {
+  height: 10px;
+  width: 10px;
+  margin: 0 5px;
+  background-color: #005040;
+  border-radius: 50%;
+  display: inline-block;
+  transition: background-color 0.3s;
+}
+
+.dots span.active {
+  background-color: #00ffcc;
+  box-shadow: 0 0 8px #00ffcc;
+}
+
+/* Styling for navigation buttons */
+.navigation {
+  margin-top: 20px;
+  height: 40px; /* Reserve space for the button */
+}
+
+.next-button,
+.finish-button {
+  background-color: transparent;
+  border: 1px solid #00ffcc;
+  color: #00ffcc;
+  padding: 10px 20px;
+  font-family: inherit;
+  font-size: 1em;
+  cursor: pointer;
+  transition: background-color 0.3s, box-shadow 0.3s;
+  text-transform: uppercase;
+}
+
+.next-button:hover,
+.finish-button:hover {
+  background-color: #00ffcc;
+  color: #000;
+  box-shadow: 0 0 10px #00ffcc;
+}
+
+/* Fade-in animation for the overlay */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}

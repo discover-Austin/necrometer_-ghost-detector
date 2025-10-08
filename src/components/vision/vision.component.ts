@@ -305,7 +305,7 @@ export class VisionComponent implements OnInit, OnDestroy {
         : 'web';
       if (platform !== 'web') {
         try {
-          await CameraPreview.start({ parent: 'app', toBack: false, position: 'rear' });
+          await CameraPreview.start({ parent: 'visionRoot', toBack: false, position: 'rear' });
           return 'native';
         } catch (err) {
           console.warn('CameraPreview.start failed, falling back to web getUserMedia', err);
