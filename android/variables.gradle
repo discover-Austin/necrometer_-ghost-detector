@@ -14,10 +14,19 @@ ext {
     androidxEspressoCoreVersion = '3.6.1'
     cordovaAndroidVersion = '10.1.1'
 
-    // Signing: read sensitive values from environment variables when available.
-    // These fall back to the previous defaults only for local debug convenience.
-    releaseKeystorePath = System.getenv("RELEASE_KEYSTORE_PATH") ?: "../android/keystore/my-release-key.jks"
-    releaseKeystorePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD") ?: "KeyPass1!"
-    releaseKeyAlias = System.getenv("RELEASE_KEY_ALIAS") ?: "necrometer_key"
-    releaseKeyPassword = System.getenv("RELEASE_KEY_PASSWORD") ?: "KeyPass1!"
+    // Signing: require environment variables for production builds.
+    // Local development may set these in the environment or use a local keystore at
+    // ../android/keystore/my-release-key.jks. CI workflows should set the following secrets:
+    // - RELEASE_KEYSTORE_BASE64 (base64-encoded keystore bytes)
+    // - RELEASE_KEYSTORE_PASSWORD
+    // - RELEASE_KEY_ALIAS
+    // - RELEASE_KEY_PASSWORD
+
+    releaseKeystorePath = System.getenv("RELEASE_KEYSTORE_PATH")
+    releaseKeystorePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+    releaseKeyAlias = System.getenv("RELEASE_KEY_ALIAS")
+    releaseKeyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+
+    // Do not provide defaults for sensitive values. If they are missing, builds that
+    // attempt to sign releases should inject them via environment variables in CI.
 }
