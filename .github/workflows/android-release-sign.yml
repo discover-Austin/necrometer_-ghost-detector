@@ -34,16 +34,28 @@ jobs:
         run: |
           npm run build
 
+      - name: Detect credentials
+        # Check for presence of the secrets at runtime and set env flags
+        run: |
+          if [ -n "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" ]; then
+            echo "HAS_KEYSTORE=true" >> $GITHUB_ENV
+          else
+            echo "HAS_KEYSTORE=false" >> $GITHUB_ENV
+          fi
+          if [ -n "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" ]; then
+            echo "HAS_PLAY_JSON=true" >> $GITHUB_ENV
+          else
+            echo "HAS_PLAY_JSON=false" >> $GITHUB_ENV
+          fi
+
       - name: Prepare android/keystore
-        if: secrets.RELEASE_KEYSTORE_BASE64 != ''
+        if: env.HAS_KEYSTORE == 'true'
         run: |
           mkdir -p android/keystore
-          echo "$RELEASE_KEYSTORE_BASE64" | base64 -d > android/keystore/my-release-key.jks
-        env:
-          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          echo "${{ secrets.RELEASE_KEYSTORE_BASE64 }}" | base64 -d > android/keystore/my-release-key.jks
 
       - name: Set signing env vars
-        if: secrets.RELEASE_KEYSTORE_BASE64 != ''
+        if: env.HAS_KEYSTORE == 'true'
         run: |
           echo "RELEASE_KEYSTORE_PATH=android/keystore/my-release-key.jks" >> $GITHUB_ENV
           echo "RELEASE_KEYSTORE_PASSWORD=${{ secrets.RELEASE_KEYSTORE_PASSWORD }}" >> $GITHUB_ENV
@@ -61,12 +73,12 @@ jobs:
           path: android/app/build/outputs/bundle/release/app-release.aab
 
       - name: Prepare Google Play service account
-        if: secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != ''
+        if: env.HAS_PLAY_JSON == 'true'
         run: |
           echo "${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}" > $HOME/gplay-service-account.json
 
       - name: Publish to Google Play (internal)
-        if: secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON != ''
+        if: env.HAS_PLAY_JSON == 'true'
         uses: r0adkll/upload-google-play@v1
         with:
           serviceAccountJson: ${{ secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON }}
@@ -75,7 +87,7 @@ jobs:
           track: ${{ env.PLAY_TRACK || 'internal' }}
 
       - name: Create GitHub Release (fallback)
-        if: secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON == ''
+        if: env.HAS_PLAY_JSON != 'true'
         uses: softprops/action-gh-release@v1
         with:
           tag_name: ${{ github.ref_name || 'unsigned-release' }}
@@ -83,7 +95,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Upload AAB to GitHub Release (fallback)
-        if: secrets.GOOGLE_PLAY_SERVICE_ACCOUNT_JSON == ''
+        if: env.HAS_PLAY_JSON != 'true'
         uses: actions/upload-release-asset@v2
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
