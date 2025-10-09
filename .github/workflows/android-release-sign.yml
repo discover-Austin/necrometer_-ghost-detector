@@ -97,7 +97,7 @@ jobs:
 
       - name: Upload AAB to GitHub Release (fallback)
         if: env.HAS_PLAY_JSON != 'true'
-        uses: actions/upload-release-asset@v2
+        uses: actions/upload-release-asset@v1
         with:
           upload_url: ${{ steps.create_release.outputs.upload_url }}
           asset_path: android/app/build/outputs/bundle/release/app-release.aab
