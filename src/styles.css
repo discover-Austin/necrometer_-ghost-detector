@@ -24,6 +24,15 @@ app-root {
   --color-primary-900: #78350f; /* amber-900 */
 }
 
+/* CSS to control camera visibility */
+capacitor-camera-preview {
+  transition: opacity 0.3s ease-in-out;
+}
+
+#camera-container.camera-hidden capacitor-camera-preview {
+  opacity: 0;
+}
+
 /* View transition animation */
 @keyframes view-fade-in {
   from {

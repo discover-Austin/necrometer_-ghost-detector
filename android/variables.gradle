@@ -1,0 +1,32 @@
+ext {
+    minSdkVersion = 23
+    compileSdkVersion = 35
+    targetSdkVersion = 35
+    androidxActivityVersion = '1.9.2'
+    androidxAppCompatVersion = '1.7.0'
+    androidxCoordinatorLayoutVersion = '1.2.0'
+    androidxCoreVersion = '1.15.0'
+    androidxFragmentVersion = '1.8.4'
+    coreSplashScreenVersion = '1.0.1'
+    androidxWebkitVersion = '1.12.1'
+    junitVersion = '4.13.2'
+    androidxJunitVersion = '1.2.1'
+    androidxEspressoCoreVersion = '3.6.1'
+    cordovaAndroidVersion = '10.1.1'
+
+    // Signing: require environment variables for production builds.
+    // Local development may set these in the environment or use a local keystore at
+    // ../android/keystore/my-release-key.jks. CI workflows should set the following secrets:
+    // - RELEASE_KEYSTORE_BASE64 (base64-encoded keystore bytes)
+    // - RELEASE_KEYSTORE_PASSWORD
+    // - RELEASE_KEY_ALIAS
+    // - RELEASE_KEY_PASSWORD
+
+    releaseKeystorePath = System.getenv("RELEASE_KEYSTORE_PATH")
+    releaseKeystorePassword = System.getenv("RELEASE_KEYSTORE_PASSWORD")
+    releaseKeyAlias = System.getenv("RELEASE_KEY_ALIAS")
+    releaseKeyPassword = System.getenv("RELEASE_KEY_PASSWORD")
+
+    // Do not provide defaults for sensitive values. If they are missing, builds that
+    // attempt to sign releases should inject them via environment variables in CI.
+}

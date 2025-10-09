@@ -1,0 +1,36 @@
+<div class="onboarding-overlay">
+  <div class="onboarding-container">
+    <!-- Dots for slide navigation -->
+    <div class="dots">
+      <span *ngFor="let slide of slides; let i = index" 
+            [class.active]="i === currentSlide()">
+      </span>
+    </div>
+
+    <!-- Slides container -->
+    <div class="slides-container">
+      <div *ngFor="let slide of slides; let i = index" 
+           class="slide" 
+           [style.transform]="'translateX(' + (i - currentSlide()) * 100 + '%)'">
+        
+        <!-- CSS-based icon container -->
+        <div class="icon-container">
+          <span [class]="slide.icon"></span>
+        </div>
+        
+        <h2>{{ slide.title }}</h2>
+        <p>{{ slide.text }}</p>
+      </div>
+    </div>
+
+    <!-- Navigation buttons -->
+    <div class="navigation">
+      <button *ngIf="currentSlide() < slides.length - 1" (click)="next()" class="next-button">
+        Next
+      </button>
+      <button *ngIf="currentSlide() === slides.length - 1" (click)="finish()" class="finish-button">
+        Begin Scan
+      </button>
+    </div>
+  </div>
+</div>
