@@ -72,9 +72,16 @@ jobs:
         run: |
           if [ -f android/gradlew ]; then chmod +x android/gradlew; fi
 
+      - name: Diagnose Gradle Java home
+        run: |
+          echo "-- gradle.properties lines that mention java.home --" || true
+          grep -n "org.gradle.java.home" android/gradle.properties || true
+          echo "-- env JAVA_HOME --"
+          echo $JAVA_HOME
+
       - name: Build Android AAB (bundleRelease)
         run: |
-          cd android && ./gradlew bundleRelease --no-daemon --warning-mode all
+          cd android && ./gradlew -Dorg.gradle.java.home="$JAVA_HOME" bundleRelease --no-daemon --warning-mode all
 
       - name: Upload signed AAB
         uses: actions/upload-artifact@v4
