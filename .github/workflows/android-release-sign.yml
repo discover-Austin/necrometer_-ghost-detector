@@ -87,6 +87,7 @@ jobs:
           track: ${{ env.PLAY_TRACK || 'internal' }}
 
       - name: Create GitHub Release (fallback)
+        id: create_release
         if: env.HAS_PLAY_JSON != 'true'
         uses: softprops/action-gh-release@v1
         with:
