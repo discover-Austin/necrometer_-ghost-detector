@@ -68,6 +68,10 @@ jobs:
           echo "RELEASE_KEY_ALIAS=${{ secrets.RELEASE_KEY_ALIAS }}" >> $GITHUB_ENV
           echo "RELEASE_KEY_PASSWORD=${{ secrets.RELEASE_KEY_PASSWORD }}" >> $GITHUB_ENV
 
+      - name: Make gradlew executable
+        run: |
+          if [ -f android/gradlew ]; then chmod +x android/gradlew; fi
+
       - name: Build Android AAB (bundleRelease)
         run: |
           cd android && ./gradlew bundleRelease --no-daemon --warning-mode all
