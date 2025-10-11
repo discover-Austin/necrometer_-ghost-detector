@@ -12,6 +12,11 @@ dist
 dist-ssr
 *.local
 
+# Environment files
+.env
+.env.local
+.env.*.local
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
@@ -22,3 +27,18 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Android
+android/.gradle
+android/build
+android/app/build
+android/local.properties
+android/.idea
+android/*.iml
+android/captures
+android/.externalNativeBuild
+android/.cxx
+
+# Capacitor
+capacitor-config.json
+
