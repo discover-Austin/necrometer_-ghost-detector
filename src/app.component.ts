@@ -7,6 +7,7 @@ import { EvpComponent } from './components/evp/evp.component';
 import { EchoesComponent } from './components/echoes/echoes.component';
 import { UpgradeComponent } from './components/upgrade/upgrade.component';
 import { GeminiService } from './services/gemini.service';
+import { EnvironmentService } from './services/environment.service';
 import { DetectedEntity, DetectionEvent } from './types';
 import { DeviceStateService } from './services/device-state.service';
 import { SplashScreen } from '@capacitor/splash-screen';
@@ -47,6 +48,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   cameraPermissionError = signal<string | null>(null);
   
   private geminiService = inject(GeminiService);
+  private environmentService = inject(EnvironmentService);
   deviceState = inject(DeviceStateService);
   upgradeService = inject(UpgradeService);
   audioService = inject(AudioService);
@@ -58,6 +60,9 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mainContent') mainContentRef!: ElementRef<HTMLElement>;
 
   constructor() {
+    // Initialize Gemini Service with environment configuration
+    this.initializeGeminiService();
+
     effect(() => {
       this.audioService.updateStaticLevel(this.deviceState.emfReading());
     });
@@ -78,6 +83,24 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         element.classList.add('view-fade-in');
       }
     });
+  }
+
+  private initializeGeminiService() {
+    const env = this.environmentService.getEnvironment();
+    
+    // Configure proxy if enabled
+    if (env.useProxy && env.proxyUrl && env.issuanceToken) {
+      console.log('Configuring Gemini service to use proxy:', env.proxyUrl);
+      this.geminiService.setProxyConfig(env.proxyUrl, env.issuanceToken);
+    } 
+    // Otherwise, check for direct API key
+    else if (env.apiKey) {
+      console.log('Configuring Gemini service with direct API key');
+      this.geminiService.setApiKey(env.apiKey, false);
+    } else {
+      console.warn('No Gemini API configuration found. The app may not function correctly.');
+      console.warn('Please configure either proxy settings or an API key.');
+    }
   }
 
   async ngAfterViewInit() {

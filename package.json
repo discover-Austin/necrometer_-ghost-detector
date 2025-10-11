@@ -5,7 +5,11 @@
   "scripts": {
     "build": "npx -p @angular/cli@^20 ng build",
     "sync:android": "npx cap sync android",
-    "open:android": "npx cap open android"
+    "open:android": "npx cap open android",
+    "build:android": "npm run build && npm run sync:android",
+    "android:debug": "cd android && ./gradlew assembleDebug",
+    "android:release": "cd android && ./gradlew assembleRelease",
+    "android:bundle": "cd android && ./gradlew bundleRelease"
   },
   "dependencies": {
     "@angular/build": "^20.3.0",
