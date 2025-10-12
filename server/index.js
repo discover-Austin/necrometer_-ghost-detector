@@ -153,6 +153,65 @@ app.post('/api/generate-glyph', requireJwt, async (req, res) => {
   }
 });
 
+// Generate an entity profile (used by client proxy)
+app.post('/api/generate-entity-profile', requireJwt, async (req, res) => {
+  try {
+    const { strength } = req.body || {};
+    const strengthDesc = (function () {
+      switch (strength) {
+        case 'weak': return 'faint and fleeting';
+        case 'moderate': return 'clear and present';
+        case 'strong': return 'powerful and disruptive';
+        case 'critical': return 'overwhelming and physically manifesting';
+        default: return 'of unknown power';
+      }
+    })();
+
+    const profilePrompt = `Generate a short, spooky, and mysterious profile for a paranormal entity. The energy signature is ${strengthDesc}. The profile must include a plausible name, a type (e.g., Poltergeist, Shade, Revenant, Wraith, Banshee, Phantom, Lingering Spirit), a one-paragraph backstory, and an 'instability' rating (a number from 50 to 100). The entity is not yet 'contained'. Respond in JSON format with keys: name, type, backstory, instability, contained.`;
+
+    const profileResponse = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: profilePrompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING },
+            type: { type: Type.STRING },
+            backstory: { type: Type.STRING },
+            instability: { type: Type.NUMBER },
+            contained: { type: Type.BOOLEAN }
+          },
+          required: ['name', 'type', 'backstory', 'instability', 'contained']
+        }
+      }
+    });
+
+    const profileData = JSON.parse(profileResponse.text.trim());
+
+    // Generate a glyph image for the profile
+    const glyphPrompt = `Create a single, minimalist, arcane, mystical sigil or glyph that represents a paranormal entity. The entity is a "${profileData.type}" known as "${profileData.name}". The glyph should be a stark white design on a pure black background. It should look ancient and mysterious. It should not be a picture of the entity, but a symbolic representation.`;
+
+    const imageResponse = await ai.models.generateImages({
+      model: 'imagen-3.0-generate-002',
+      prompt: glyphPrompt,
+      config: {
+        numberOfImages: 1,
+        outputMimeType: 'image/png',
+        aspectRatio: '1:1',
+      }
+    });
+
+    const glyphB64 = imageResponse.generatedImages && imageResponse.generatedImages[0] && imageResponse.generatedImages[0].image && imageResponse.generatedImages[0].image.imageBytes;
+
+    return res.json({ ...profileData, glyphB64 });
+  } catch (err) {
+    console.error('generate-entity-profile error', err);
+    return res.status(500).json({ error: String(err) });
+  }
+});
+
 // Temporal echo endpoint
 app.post('/api/temporal-echo', requireJwt, async (req, res) => {
   try {

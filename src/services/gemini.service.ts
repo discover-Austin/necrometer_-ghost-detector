@@ -13,7 +13,9 @@ export class GeminiService {
   private apiKey?: string;
   // Optional server-side proxy configuration
   private proxyBaseUrl: string | null = null;
-  private proxyToken: string | null = null;
+  private proxyToken: string | null = null; // shared issuance token
+  private proxyJwt: string | null = null; // short-lived JWT obtained from /issue-token
+  private proxyJwtExpiresAt: number | null = null;
 
   constructor() {
     // Try several locations for an API key (server env, window.__env, localStorage) but do not fallback to mocks.
@@ -60,6 +62,46 @@ export class GeminiService {
   setProxyConfig(baseUrl: string, token: string) {
     this.proxyBaseUrl = baseUrl.replace(/\/$/, '');
     this.proxyToken = token;
+    // clear any cached JWT when proxy config changes
+    this.proxyJwt = null;
+    this.proxyJwtExpiresAt = null;
+  }
+
+  // Obtain a short-lived JWT from the proxy using the shared issuance token.
+  private async ensureProxyJwt(): Promise<string> {
+    if (!this.proxyBaseUrl || !this.proxyToken) throw new Error('Proxy not configured');
+    const now = Date.now();
+    if (this.proxyJwt && this.proxyJwtExpiresAt && now + 5000 < this.proxyJwtExpiresAt) {
+      return this.proxyJwt;
+    }
+    // Request a new JWT from the proxy issuance endpoint
+    const resp = await fetch(`${this.proxyBaseUrl}/issue-token`, {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${this.proxyToken}` },
+    });
+    if (!resp.ok) {
+      throw new Error(`Failed to obtain proxy JWT: ${resp.status} ${await resp.text()}`);
+    }
+    const body = await resp.json();
+    const token = body && body.token;
+    if (!token) throw new Error('Proxy did not return a token');
+
+    // decode JWT expiry (simple parse of payload)
+    try {
+      const parts = token.split('.');
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload && payload.exp) {
+          this.proxyJwtExpiresAt = payload.exp * 1000;
+        } else {
+          this.proxyJwtExpiresAt = Date.now() + 15 * 60 * 1000; // fallback 15m
+        }
+      }
+    } catch (_) {
+      this.proxyJwtExpiresAt = Date.now() + 15 * 60 * 1000;
+    }
+    this.proxyJwt = token;
+    return token;
   }
 
   private ensureConfigured() {
@@ -71,9 +113,10 @@ export class GeminiService {
   async getEntityProfile(strength: 'weak' | 'moderate' | 'strong' | 'critical'): Promise<EntityProfile> {
     // Use proxy endpoint if configured
     if (this.proxyBaseUrl && this.proxyToken) {
+      const jwt = await this.ensureProxyJwt();
       const resp = await fetch(`${this.proxyBaseUrl}/api/generate-entity-profile`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.proxyToken}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
         body: JSON.stringify({ strength }),
       });
       if (!resp.ok) throw new Error(`Proxy error: ${resp.status} ${await resp.text()}`);
@@ -137,9 +180,10 @@ export class GeminiService {
 
     // Prefer proxy if configured
     if (this.proxyBaseUrl && this.proxyToken) {
+      const jwt = await this.ensureProxyJwt();
       const resp = await fetch(`${this.proxyBaseUrl}/api/analyze-scene`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.proxyToken}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
         body: JSON.stringify({ imageBase64: imageDataB64 }),
       });
       if (!resp.ok) throw new Error(`Proxy error: ${resp.status} ${await resp.text()}`);
@@ -215,9 +259,10 @@ export class GeminiService {
     const prompt = `Generate a "temporal echo" from a haunted location. This is a brief, one-paragraph description of a dramatic, tragic, or emotionally charged historical event that could leave a spiritual residue. Be vague about the exact location, but specific about the emotions and actions. Provide a title for the event and the historical era (e.g., 'Victorian', 'Prohibition', 'Colonial').`;
     // Use proxy if available
     if (this.proxyBaseUrl && this.proxyToken) {
+      const jwt = await this.ensureProxyJwt();
       const resp = await fetch(`${this.proxyBaseUrl}/api/temporal-echo`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${this.proxyToken}` },
+        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
       });
       if (!resp.ok) throw new Error(`Proxy error: ${resp.status} ${await resp.text()}`);
       return await resp.json() as TemporalEcho;
