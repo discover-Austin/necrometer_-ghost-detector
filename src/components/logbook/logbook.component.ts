@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, output, signal, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter, signal, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DetectedEntity, CrossReferenceResult, EmotionalResonanceResult, ContainmentRitual } from '../../types';
 import { UpgradeService } from '../../services/upgrade.service';
@@ -14,10 +14,10 @@ type LabState = 'idle' | 'cross-referencing' | 'scanning-resonance' | 'containin
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class LogbookComponent {
-  detections = input.required<DetectedEntity[]>();
-  isLoading = input.required<boolean>();
-  error = input.required<string | null>();
-  containEntity = output<DetectedEntity>();
+  @Input() detections: DetectedEntity[] = [];
+  @Input() isLoading: boolean = false;
+  @Input() error: string | null = null;
+  @Output() containEntity = new EventEmitter<DetectedEntity>();
 
   selectedEntity = signal<DetectedEntity | null>(null);
   labState = signal<LabState>('idle');

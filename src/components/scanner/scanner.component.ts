@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, output, signal, computed, inject, effect } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Output, EventEmitter, signal, computed, inject, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DetectionEvent } from '../../types';
 import { SpectralMapComponent } from '../spectral-map/spectral-map.component';
@@ -13,7 +13,7 @@ import { DeviceStateService } from '../../services/device-state.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class ScannerComponent {
-  detection = output<DetectionEvent>();
+  @Output() detection = new EventEmitter<DetectionEvent>();
   
   status = signal('CALIBRATING...');
   private lastDetectionTime = 0;
@@ -52,7 +52,7 @@ export class ScannerComponent {
     else if (reading > 95) strength = 'strong';
     else if (reading > 90) strength = 'moderate';
     
-    this.detection.emit({ emf: parseFloat(reading.toFixed(2)), strength });
+  this.detection.emit({ emf: parseFloat(reading.toFixed(2)), strength });
   }
 
   barColorClass = computed(() => {

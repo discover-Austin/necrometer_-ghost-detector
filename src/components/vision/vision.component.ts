@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, signal, input, effect, OnDestroy, OnInit, computed, ElementRef, ViewChild } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, effect, OnDestroy, OnInit, computed, ElementRef, ViewChild, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
 import { DetectedEntity, AREntity, SceneObject } from '../../types';
@@ -18,7 +18,7 @@ import { AudioService } from '../../services/audio.service';
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class VisionComponent implements OnInit, OnDestroy {
-  detections = input.required<DetectedEntity[]>();
+  @Input() detections!: DetectedEntity[];
   deviceState = inject(DeviceStateService);
   private sensorService = inject(SensorService);
   private upgradeService = inject(UpgradeService);
@@ -63,54 +63,62 @@ export class VisionComponent implements OnInit, OnDestroy {
   };
   
   constructor() {
+    // Keep a minimal effect to ensure signals are tracked by Angular's reactivity system.
     effect(() => {
-      const currentDets = this.detections();
-      
-      this.arEntities.update(oldArEntities => {
-        const oldArEntitiesMap = new Map(oldArEntities.map(e => [e.id, e]));
-        
-        return currentDets.map(detection => {
-          const existingArEntity = oldArEntitiesMap.get(detection.id);
-          
-          if (existingArEntity) {
-            return Object.assign({}, existingArEntity, detection);
-          } else {
-            const { x, y } = this.getNewSpawnPosition();
-            // Deterministic nearest-anchor selection
-            const scene = this.sceneObjects();
-            const potentialAnchor = scene.length > 0 ? findNearestAnchor(scene, x, y) : null;
-            const anchor = potentialAnchor ? {
-              objectIndex: potentialAnchor.objectIndex,
-              polylineIndex: potentialAnchor.polylineIndex,
-              pointIndex: potentialAnchor.pointIndex,
-              baseX: potentialAnchor.baseX,
-              baseY: potentialAnchor.baseY,
-              offsetX: potentialAnchor.offsetX,
-              offsetY: potentialAnchor.offsetY,
-              depth: potentialAnchor.depth
-            } : undefined;
+      this.currentTime();
+    });
+  }
 
-            return Object.assign({}, detection, {
-              x,
-              y,
-              vx: (Math.random() - 0.5) * 0.05,
-              vy: (Math.random() - 0.5) * 0.05,
-              ax: 0,
-              ay: 0,
-              anchor,
-              occluded: false,
-              scale: 1 + (Math.random() - 0.5) * 0.18, // human height variance
-              rotation: (Math.random() - 0.5) * 6, // small tilt
-              bobPhase: Math.random() * Math.PI * 2,
-              leftArmAngle: (Math.random() - 0.5) * 10,
-              rightArmAngle: (Math.random() - 0.5) * 10,
-              leftLegAngle: (Math.random() - 0.5) * 8,
-              rightLegAngle: (Math.random() - 0.5) * 8,
-              blink: Math.random() * 0.2,
-              mouthOpen: Math.random() * 0.2,
-            });
-          }
-        });
+  ngOnChanges(changes: import('@angular/core').SimpleChanges) {
+    if (changes['detections']) {
+      this.syncDetectionsToAREntities();
+    }
+  }
+
+  private syncDetectionsToAREntities() {
+    const currentDets = Array.isArray(this.detections) ? this.detections : [];
+    this.arEntities.update(oldArEntities => {
+      const oldArEntitiesMap = new Map(oldArEntities.map(e => [e.id, e]));
+
+      return currentDets.map(detection => {
+        const existingArEntity = oldArEntitiesMap.get(detection.id);
+        if (existingArEntity) {
+          return Object.assign({}, existingArEntity, detection);
+        } else {
+          const { x, y } = this.getNewSpawnPosition();
+          const scene = this.sceneObjects();
+          const potentialAnchor = scene.length > 0 ? findNearestAnchor(scene, x, y) : null;
+          const anchor = potentialAnchor ? {
+            objectIndex: potentialAnchor.objectIndex,
+            polylineIndex: potentialAnchor.polylineIndex,
+            pointIndex: potentialAnchor.pointIndex,
+            baseX: potentialAnchor.baseX,
+            baseY: potentialAnchor.baseY,
+            offsetX: potentialAnchor.offsetX,
+            offsetY: potentialAnchor.offsetY,
+            depth: potentialAnchor.depth
+          } : undefined;
+
+          return Object.assign({}, detection, {
+            x,
+            y,
+            vx: (Math.random() - 0.5) * 0.05,
+            vy: (Math.random() - 0.5) * 0.05,
+            ax: 0,
+            ay: 0,
+            anchor,
+            occluded: false,
+            scale: 1 + (Math.random() - 0.5) * 0.18,
+            rotation: (Math.random() - 0.5) * 6,
+            bobPhase: Math.random() * Math.PI * 2,
+            leftArmAngle: (Math.random() - 0.5) * 10,
+            rightArmAngle: (Math.random() - 0.5) * 10,
+            leftLegAngle: (Math.random() - 0.5) * 8,
+            rightLegAngle: (Math.random() - 0.5) * 8,
+            blink: Math.random() * 0.2,
+            mouthOpen: Math.random() * 0.2,
+          });
+        }
       });
     });
   }

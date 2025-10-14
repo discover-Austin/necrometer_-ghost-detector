@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, input, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 
 interface Signal {
   angle: number;
@@ -16,7 +16,7 @@ interface Signal {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class GeoTriangulatorComponent implements AfterViewInit, OnDestroy {
-  emfReading = input.required<number>();
+  @Input() emfReading: number = 0;
   @ViewChild('radarCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
   private ctx!: CanvasRenderingContext2D;
@@ -28,7 +28,7 @@ export class GeoTriangulatorComponent implements AfterViewInit, OnDestroy {
 
   constructor() {
     effect(() => {
-      const reading = this.emfReading();
+  const reading = this.emfReading;
       if (reading > 10 && !this.signal) {
         this.signal = this.createSignal();
       } else if (reading <= 10 && this.signal) {
@@ -87,7 +87,7 @@ export class GeoTriangulatorComponent implements AfterViewInit, OnDestroy {
     if (!this.ctx) return;
 
     this.ctx.clearRect(0, 0, this.size, this.size);
-    const readingFactor = this.emfReading() / 100;
+  const readingFactor = this.emfReading / 100;
 
     // Draw grid
     this.ctx.strokeStyle = 'rgba(0, 255, 0, 0.2)';

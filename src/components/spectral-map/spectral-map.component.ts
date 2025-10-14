@@ -1,5 +1,5 @@
 
-import { Component, ChangeDetectionStrategy, input, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input, effect, ViewChild, ElementRef, AfterViewInit, OnDestroy } from '@angular/core';
 
 interface Particle {
   x: number;
@@ -18,7 +18,7 @@ interface Particle {
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SpectralMapComponent implements AfterViewInit, OnDestroy {
-  emfReading = input.required<number>();
+  @Input() emfReading: number = 0;
   @ViewChild('spectralCanvas') canvasRef!: ElementRef<HTMLCanvasElement>;
 
   private ctx!: CanvasRenderingContext2D;
@@ -30,7 +30,7 @@ export class SpectralMapComponent implements AfterViewInit, OnDestroy {
   constructor() {
     effect(() => {
       if (!this.ctx) return;
-      const reading = this.emfReading();
+  const reading = this.emfReading;
       const targetParticleCount = Math.floor((reading / 100) * 350); // Increased density
       
       while (this.particles.length < targetParticleCount) {
@@ -65,7 +65,7 @@ export class SpectralMapComponent implements AfterViewInit, OnDestroy {
   }
 
   private createParticle(): Particle {
-    const readingFactor = this.emfReading() / 100;
+  const readingFactor = this.emfReading / 100;
     return {
       x: this.width / 2,
       y: this.height / 2,
@@ -92,7 +92,7 @@ export class SpectralMapComponent implements AfterViewInit, OnDestroy {
     this.ctx.fillStyle = 'rgba(0, 0, 0, 0.15)';
     this.ctx.fillRect(0, 0, this.width, this.height);
 
-    const readingFactor = this.emfReading() / 100;
+  const readingFactor = this.emfReading / 100;
     // Brighter particles with higher EMF
     const intensity = Math.min(1.5, 0.5 + readingFactor * 2);
 
