@@ -154,6 +154,27 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     }
   }
 
+  /** Prompt the user for a Gemini API key and configure the GeminiService at runtime. */
+  configureApiKey() {
+    try {
+      const existing = (() => { try { return localStorage.getItem('necrometer.apiKey'); } catch { return null; } })();
+      const promptText = existing ? `Current API key detected in storage. Enter a new key to replace it or press Cancel to keep.` : `Enter your Gemini API key (will be stored in localStorage).`;
+      const key = window.prompt(promptText, existing || '');
+      if (key && key.trim()) {
+        try {
+          this.geminiService.setApiKey(key.trim(), true);
+          alert('Gemini API key configured. AI features are now enabled.');
+        } catch (e) {
+          console.error('Failed to set API key:', e);
+          alert('Failed to configure API key. See console for details.');
+        }
+      }
+    } catch (e) {
+      console.warn('Unable to prompt for API key in this environment.', e);
+      alert('API key configuration is not supported in this environment.');
+    }
+  }
+
   private handleCameraError(err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
     if (errorMessage.toLowerCase().includes('permission')) {
