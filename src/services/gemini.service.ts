@@ -18,7 +18,8 @@ export class GeminiService {
   private proxyJwtExpiresAt: number | null = null;
 
   constructor() {
-    // Try several locations for an API key (server env, window.__env, localStorage) but do not fallback to mocks.
+    // Prefer server-side configuration. Do NOT automatically load an API key from browser storage.
+    // Server-side environment (Node) may provide an API key when running the server proxy.
     let key: string | undefined;
     try {
       if (typeof process !== 'undefined' && (process as any).env && (process as any).env.API_KEY) {
@@ -26,33 +27,29 @@ export class GeminiService {
       }
     } catch {}
 
-    try {
-      if (!key && typeof window !== 'undefined') {
-        const w = window as any;
-        if (w && w.__env && w.__env.API_KEY) key = w.__env.API_KEY;
-        if (!key) {
-          try {
-            const fromStorage = localStorage.getItem('necrometer.apiKey');
-            if (fromStorage) key = fromStorage;
-          } catch {}
-        }
-      }
-    } catch {}
-
     if (key) {
       this.apiKey = key;
       this.ai = new GoogleGenAI({ apiKey: key });
     } else {
-      // Not configured yet. Consumers must call setApiKey() or configure the environment.
-      console.warn('GeminiService: API key not configured. Call setApiKey(apiKey) before using the service.');
+      // Not configured yet. Consumers must call setApiKey() (for dev) or configure proxy via setProxyConfig().
+      console.warn('GeminiService: API key not configured. Call setApiKey(apiKey) for development or setProxyConfig(baseUrl, token) to use the server proxy.');
     }
   }
 
   /** Set API key at runtime (useful for web clients). This will instantiate the GoogleGenAI client. */
   setApiKey(apiKey: string, persist = false) {
     if (!apiKey || typeof apiKey !== 'string') throw new Error('Invalid API key');
+    // If running in a production-like environment (non-localhost), do not allow persistent client-side storage
+    const isProdHost = typeof window !== 'undefined' && window.location && window.location.hostname && !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
+    if (persist && isProdHost) {
+      console.warn('Ignoring request to persist API key in production environment. Use the server-side proxy instead.');
+      persist = false;
+    }
+
     this.apiKey = apiKey;
     this.ai = new GoogleGenAI({ apiKey });
+
+    // Do not persist by default. Persist only when explicitly requested and not in production.
     if (persist) {
       try { localStorage.setItem('necrometer.apiKey', apiKey); } catch {}
     }
@@ -105,8 +102,8 @@ export class GeminiService {
   }
 
   private ensureConfigured() {
-    if (!this.ai) {
-      throw new Error('GeminiService not configured: API key missing. Call setApiKey(apiKey) or set API_KEY in the environment.');
+    if (!this.ai && !(this.proxyBaseUrl && this.proxyToken)) {
+      throw new Error('GeminiService not configured: API key missing and proxy not configured. In production, configure the server proxy with setProxyConfig(baseUrl, token).');
     }
   }
 

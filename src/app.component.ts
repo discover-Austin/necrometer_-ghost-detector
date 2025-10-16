@@ -158,12 +158,18 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   configureApiKey() {
     try {
       const existing = (() => { try { return localStorage.getItem('necrometer.apiKey'); } catch { return null; } })();
-      const promptText = existing ? `Current API key detected in storage. Enter a new key to replace it or press Cancel to keep.` : `Enter your Gemini API key (will be stored in localStorage).`;
+      const promptText = existing ? `Current API key detected in storage. Enter a new key to replace it or press Cancel to keep.` : `Enter your Gemini API key (for development only). Do NOT persist your key on devices you don't control.`;
       const key = window.prompt(promptText, existing || '');
       if (key && key.trim()) {
         try {
-          this.geminiService.setApiKey(key.trim(), true);
-          alert('Gemini API key configured. AI features are now enabled.');
+          // Recommend NOT persisting on device. Ask for explicit confirmation.
+          const shouldPersist = window.confirm('Persist this API key to localStorage? This is NOT recommended for production devices. Click OK to persist (development only), Cancel to keep temporarily.');
+          this.geminiService.setApiKey(key.trim(), !!shouldPersist);
+          if (shouldPersist) {
+            alert('Gemini API key configured and stored locally (development only). For production use, configure the server proxy.');
+          } else {
+            alert('Gemini API key configured for this session only. For production, please configure the server proxy.');
+          }
         } catch (e) {
           console.error('Failed to set API key:', e);
           alert('Failed to configure API key. See console for details.');
