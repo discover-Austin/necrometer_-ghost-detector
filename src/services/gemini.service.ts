@@ -1,6 +1,8 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { GoogleGenAI, Type } from "@google/genai";
 import { EntityProfile, TemporalEcho, EVPAnalysis, DetectedEntity, CrossReferenceResult, EmotionalResonanceResult, ContainmentRitual, SceneAnalysisResult, SceneObject } from '../types';
+import { LoggerService } from './logger.service';
+import { EnvironmentService } from './environment.service';
 
 // A default fallback glyph in case image generation fails
 const FALLBACK_GLYPH_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAIrSURBVHhe7ZtNattAEID7/9+dFbSIIiJaNs06h5L2Wk2zJ5NCS80rFeLz4eG/4K+gKwhKBISKgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQITw3wL8/vmx0+l0vV7/8Xg8Ho/HZDI5OTkRgZfL5XA4lMvl4+PjTqfT6XQ+n//1eDyZTAY4f2S5XF6v1/P5/Gaz+fPz89ls9vf3d7/f/08G2Gw2nU7n8/kymczn87e3t3e7XZ/P93q9brdbn8/3er0+n++3f/p/Axyfz/d6vW63W5/P93q9brfL5XKpVCoVCoXC4fD1+z/9ZwAul8vlcvl8vslk8ng8zWYz4P9I0+k0mUwul8vlcnk8Hm82m1KpFAqFw+Hw+vo6kP+Pfr+fTqdzOBwOh8PpdDgcDpVKhUKhUqlUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKh8N8T/sFj4iwy+vRp2oAAAAASUVORK5CYII=';
@@ -9,6 +11,8 @@ const FALLBACK_GLYPH_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNS
   providedIn: 'root',
 })
 export class GeminiService {
+  private logger = inject(LoggerService);
+  private env = inject(EnvironmentService);
   private ai?: GoogleGenAI;
   private apiKey?: string;
   // Optional server-side proxy configuration
@@ -18,44 +22,64 @@ export class GeminiService {
   private proxyJwtExpiresAt: number | null = null;
 
   constructor() {
+    this.logger.info('GeminiService initializing...');
     // Try several locations for an API key (server env, window.__env, localStorage) but do not fallback to mocks.
     let key: string | undefined;
     try {
       if (typeof process !== 'undefined' && (process as any).env && (process as any).env.API_KEY) {
         key = (process as any).env.API_KEY;
+        this.logger.debug('API key loaded from process.env');
       }
-    } catch {}
+    } catch (e) {
+      this.logger.debug('Failed to read from process.env', e);
+    }
 
     try {
       if (!key && typeof window !== 'undefined') {
         const w = window as any;
-        if (w && w.__env && w.__env.API_KEY) key = w.__env.API_KEY;
+        if (w && w.__env && w.__env.API_KEY) {
+          key = w.__env.API_KEY;
+          this.logger.debug('API key loaded from window.__env');
+        }
         if (!key) {
-          try {
-            const fromStorage = localStorage.getItem('necrometer.apiKey');
-            if (fromStorage) key = fromStorage;
-          } catch {}
+          const fromStorage = this.env.getStorageItem('apiKey');
+          if (fromStorage) {
+            key = fromStorage;
+            this.logger.debug('API key loaded from localStorage');
+          }
         }
       }
-    } catch {}
+    } catch (e) {
+      this.logger.debug('Failed to read API key from window/storage', e);
+    }
 
     if (key) {
       this.apiKey = key;
       this.ai = new GoogleGenAI({ apiKey: key });
+      this.logger.info('GeminiService configured with API key');
     } else {
       // Not configured yet. Consumers must call setApiKey() or configure the environment.
-      console.warn('GeminiService: API key not configured. Call setApiKey(apiKey) before using the service.');
+      this.logger.warn('GeminiService: API key not configured. Call setApiKey(apiKey) before using the service.');
     }
   }
 
   /** Set API key at runtime (useful for web clients). This will instantiate the GoogleGenAI client. */
   setApiKey(apiKey: string, persist = false) {
-    if (!apiKey || typeof apiKey !== 'string') throw new Error('Invalid API key');
+    if (!apiKey || typeof apiKey !== 'string') {
+      this.logger.error('Invalid API key provided');
+      throw new Error('Invalid API key');
+    }
     this.apiKey = apiKey;
     this.ai = new GoogleGenAI({ apiKey });
     if (persist) {
-      try { localStorage.setItem('necrometer.apiKey', apiKey); } catch {}
+      const success = this.env.setStorageItem('apiKey', apiKey);
+      if (success) {
+        this.logger.info('API key persisted to storage');
+      } else {
+        this.logger.warn('Failed to persist API key to storage');
+      }
     }
+    this.logger.info('API key set successfully');
   }
 
   /** Configure a server-side proxy (base URL) and shared bearer token. When configured, some requests will be routed through the proxy. */
@@ -111,18 +135,28 @@ export class GeminiService {
   }
 
   async getEntityProfile(strength: 'weak' | 'moderate' | 'strong' | 'critical'): Promise<EntityProfile> {
-    // Use proxy endpoint if configured
-    if (this.proxyBaseUrl && this.proxyToken) {
-      const jwt = await this.ensureProxyJwt();
-      const resp = await fetch(`${this.proxyBaseUrl}/api/generate-entity-profile`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
-        body: JSON.stringify({ strength }),
-      });
-      if (!resp.ok) throw new Error(`Proxy error: ${resp.status} ${await resp.text()}`);
-      return await resp.json() as EntityProfile;
-    }
-    this.ensureConfigured();
+    const timer = this.logger.startTimer('getEntityProfile');
+    this.logger.info(`Generating entity profile for ${strength} strength`);
+
+    try {
+      // Use proxy endpoint if configured
+      if (this.proxyBaseUrl && this.proxyToken) {
+        const jwt = await this.ensureProxyJwt();
+        const resp = await fetch(`${this.proxyBaseUrl}/api/generate-entity-profile`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
+          body: JSON.stringify({ strength }),
+        });
+        if (!resp.ok) {
+          const error = `Proxy error: ${resp.status} ${await resp.text()}`;
+          this.logger.error('Proxy entity profile generation failed', error);
+          throw new Error(error);
+        }
+        const result = await resp.json() as EntityProfile;
+        timer();
+        return result;
+      }
+      this.ensureConfigured();
     const strengthDescription = this.getStrengthDescription(strength);
     const profilePrompt = `Generate a short, spooky, and mysterious profile for a paranormal entity. The energy signature is ${strengthDescription}. The profile must include a plausible name, a type (e.g., Poltergeist, Shade, Revenant, Wraith, Banshee, Phantom, Lingering Spirit), a one-paragraph backstory, and an 'instability' rating (a number from 50 to 100). The entity is not yet 'contained'. Do not use markdown.`;
     // Call the real API and propagate errors to callers (no mocks returned here)
@@ -162,8 +196,16 @@ export class GeminiService {
         aspectRatio: '1:1',
       },
     });
-    const glyphB64 = imageResponse.generatedImages[0].image.imageBytes;
-    return { ...profileData, glyphB64 };
+      const glyphB64 = imageResponse.generatedImages[0].image.imageBytes;
+      const result = { ...profileData, glyphB64 };
+      timer();
+      this.logger.info(`Entity profile generated: ${result.name} (${result.type})`);
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to generate entity profile', error);
+      timer();
+      throw error;
+    }
   }
 
   async analyzeScene(imageDataB64: string): Promise<SceneAnalysisResult> {

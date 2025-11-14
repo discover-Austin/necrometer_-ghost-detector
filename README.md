@@ -2,19 +2,228 @@
 <img width="1200" height="475" alt="GHBanner" src="https://github.com/user-attachments/assets/0aa67016-6eaf-458a-adb2-6e31a0763ed6" />
 </div>
 
-# Run and deploy your AI Studio app
+# 👻 Necrometer - Ghost Detector
 
-This contains everything you need to run your app locally.
+A sophisticated paranormal activity scanner powered by AI. Detect, analyze, and contain paranormal entities using cutting-edge technology and Google's Gemini AI.
 
-View your app in AI Studio: https://ai.studio/apps/drive/1gnEU5O4icie00ZCOoaeAK0WdqDdMs9r5
+[![Angular](https://img.shields.io/badge/Angular-20.3-red.svg)](https://angular.io)
+[![Capacitor](https://img.shields.io/badge/Capacitor-7.4-blue.svg)](https://capacitorjs.com)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org)
 
-## Run Locally
+## ✨ Features
 
-**Prerequisites:**  Node.js
+- **📡 Real-time Scanner**: Detect paranormal entities using device sensors and EMF readings
+- **👁️ Vision Mode**: AI-powered scene analysis using your device camera
+- **🎤 EVP Analyzer**: Electronic Voice Phenomenon detection and analysis
+- **📖 Logbook**: Track and manage all detected entities
+- **⏰ Temporal Echoes**: Discover historical events tied to spiritual activity
+- **🔮 Spectral Map**: Visualize paranormal hotspots in your area
+- **🛡️ Containment Rituals**: AI-generated procedures to contain detected entities
+- **⚡ Pro Mode**: Unlock advanced features and enhanced detection capabilities
 
+## 🚀 Quick Start
 
-1. Install dependencies:
-   `npm install`
-2. Set the `GEMINI_API_KEY` in [.env.local](.env.local) to your Gemini API key
-3. Run the app:
-   `npm run dev`
+### Prerequisites
+
+- **Node.js** (v18 or higher recommended)
+- **npm** (comes with Node.js)
+- A **Gemini API key** from [Google AI Studio](https://aistudio.google.com/app/apikey)
+
+### Installation
+
+1. **Clone the repository**:
+   ```bash
+   git clone <your-repo-url>
+   cd necrometer_-ghost-detector
+   ```
+
+2. **Install dependencies**:
+   ```bash
+   npm install
+   ```
+
+3. **Configure your API key**:
+   - Open `.env.local` and replace `your_gemini_api_key_here` with your actual Gemini API key:
+   ```env
+   GEMINI_API_KEY=your_actual_api_key_here
+   ```
+   - Alternatively, you can configure the API key at runtime through the app's settings
+
+4. **Run the development server**:
+   ```bash
+   npm run dev
+   ```
+
+5. **Open your browser** and navigate to `http://localhost:3000`
+
+## 📱 Mobile Development
+
+### Android
+
+1. **Build the web app**:
+   ```bash
+   npm run build
+   ```
+
+2. **Sync with Android**:
+   ```bash
+   npm run sync:android
+   ```
+
+3. **Open in Android Studio**:
+   ```bash
+   npm run open:android
+   ```
+
+### iOS
+
+1. **Build the web app**:
+   ```bash
+   npm run build
+   ```
+
+2. **Sync with iOS**:
+   ```bash
+   npm run sync:ios
+   ```
+
+3. **Open in Xcode**:
+   ```bash
+   npm run open:ios
+   ```
+
+## 📜 Available Scripts
+
+| Script | Description |
+|--------|-------------|
+| `npm run dev` | Start development server on port 3000 |
+| `npm run build` | Build for production |
+| `npm run build:prod` | Build with production optimizations |
+| `npm run sync:android` | Sync web assets to Android platform |
+| `npm run open:android` | Open project in Android Studio |
+| `npm run sync:ios` | Sync web assets to iOS platform |
+| `npm run open:ios` | Open project in Xcode |
+| `npm run cap:sync` | Sync all Capacitor platforms |
+| `npm test` | Run tests (coming soon) |
+
+## 🏗️ Project Structure
+
+```
+necrometer_-ghost-detector/
+├── src/
+│   ├── components/          # UI components
+│   │   ├── scanner/         # Main detection scanner
+│   │   ├── vision/          # AI vision analysis
+│   │   ├── evp/             # EVP analyzer
+│   │   ├── echoes/          # Temporal echoes
+│   │   ├── logbook/         # Entity logbook
+│   │   ├── spectral-map/    # Paranormal mapping
+│   │   ├── geo-triangulator/# Location triangulation
+│   │   └── upgrade/         # Pro upgrade management
+│   ├── services/            # Business logic
+│   │   ├── gemini.service.ts       # AI integration
+│   │   ├── audio.service.ts        # Audio effects
+│   │   ├── sensor.service.ts       # Device sensors
+│   │   ├── persistence.service.ts  # Data storage
+│   │   ├── environment.service.ts  # Environment config
+│   │   ├── logger.service.ts       # Logging
+│   │   └── upgrade.service.ts      # Pro features
+│   ├── types.ts             # TypeScript definitions
+│   ├── styles.css           # Global styles
+│   └── app.component.ts     # Root component
+├── android/                 # Android platform
+├── ios/                     # iOS platform (if added)
+├── dist/                    # Build output
+├── index.html              # App entry point
+├── index.tsx               # App bootstrap
+├── angular.json            # Angular configuration
+├── capacitor.config.ts     # Capacitor configuration
+├── tsconfig.json           # TypeScript configuration
+├── package.json            # Dependencies
+└── README.md              # This file
+```
+
+## 🛠️ Technologies Used
+
+- **[Angular 20](https://angular.io)**: Modern web framework with zoneless change detection
+- **[Capacitor 7](https://capacitorjs.com)**: Native mobile capabilities
+- **[Google Gemini AI](https://ai.google.dev)**: AI-powered entity analysis and image generation
+- **[RxJS 7](https://rxjs.dev)**: Reactive programming
+- **[Tailwind CSS](https://tailwindcss.com)**: Utility-first styling
+- **[TypeScript 5.8](https://www.typescriptlang.org)**: Type-safe development
+
+## 🎮 How to Use
+
+1. **Grant Permissions**: Allow camera and sensor access when prompted
+2. **Configure API**: If not set via `.env.local`, tap the settings icon to configure your Gemini API key
+3. **Start Scanning**: The scanner will automatically begin detecting paranormal activity
+4. **Explore Modes**:
+   - 📡 **Scanner**: Real-time EMF detection
+   - 👁️ **Vision**: AI-powered scene analysis
+   - 🎤 **EVP**: Voice phenomenon detection
+   - ⏰ **Echoes**: Historical event discovery
+   - 📖 **Logbook**: View all detected entities
+   - 🛒 **Store**: Upgrade to Pro mode
+
+## 🔧 Configuration
+
+### Environment Variables
+
+Create or edit `.env.local`:
+
+```env
+# Required: Your Gemini API key
+GEMINI_API_KEY=your_api_key_here
+
+# Optional: Server proxy configuration (advanced)
+# PROXY_BASE_URL=https://your-server.com
+# PROXY_TOKEN=your_token
+```
+
+### Runtime Configuration
+
+You can also configure the API key at runtime:
+- Click the ⚙️ settings icon in the app
+- Enter your Gemini API key when prompted
+- The key will be stored securely in localStorage
+
+## 🐛 Troubleshooting
+
+### Camera Permission Issues
+- **Web**: Ensure you're using HTTPS or localhost
+- **Mobile**: Check app permissions in device settings
+- The app will attempt rear camera first, then fallback to front camera
+
+### API Key Issues
+- Verify your key is valid at [Google AI Studio](https://aistudio.google.com/app/apikey)
+- Check the browser console for detailed error messages
+- Try clearing localStorage and re-entering the key
+
+### Build Errors
+- Ensure Node.js version is 18 or higher
+- Clear node_modules and reinstall: `rm -rf node_modules && npm install`
+- Clear Angular cache: `rm -rf .angular`
+
+## 📄 License
+
+This project is provided as-is for educational and entertainment purposes.
+
+## 🙏 Acknowledgments
+
+- Built with [Google AI Studio](https://ai.studio)
+- Powered by [Gemini AI](https://ai.google.dev)
+- Paranormal research inspired by real EMF detection principles
+
+## 🔮 Future Enhancements
+
+- [ ] Real-time collaboration mode
+- [ ] Cloud sync for detections
+- [ ] Advanced spectral analysis
+- [ ] Integration with real EMF sensors
+- [ ] Multi-language support
+- [ ] Augmented reality overlays
+- [ ] Offline mode improvements
+
+---
+
+**⚠️ Disclaimer**: This app is for entertainment purposes. Any paranormal detections should not be taken as scientific evidence of supernatural activity.

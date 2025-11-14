@@ -5,6 +5,7 @@ app-root {
 }
 
 :root {
+  /* Primary color palette - Green theme */
   --color-primary-300: #6ee7b7; /* green-300 */
   --color-primary-400: #34d399; /* green-400 */
   --color-primary-500: #10b981; /* green-500 */
@@ -12,9 +13,33 @@ app-root {
   --color-primary-700: #047857; /* green-700 */
   --color-primary-800: #065f46; /* green-800 */
   --color-primary-900: #064e3b; /* green-900 */
+
+  /* Spacing */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  /* Borders */
+  --border-radius-sm: 0.25rem;
+  --border-radius-md: 0.5rem;
+  --border-radius-lg: 1rem;
+
+  /* Transitions */
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 300ms ease-in-out;
+  --transition-slow: 500ms ease-in-out;
+
+  /* Shadows */
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+  --shadow-glow: 0 0 20px rgba(16, 185, 129, 0.5);
 }
 
 .pro-theme {
+  /* Pro theme - Amber/Gold palette */
   --color-primary-300: #fcd34d; /* amber-300 */
   --color-primary-400: #fbbf24; /* amber-400 */
   --color-primary-500: #f59e0b; /* amber-500 */
@@ -22,9 +47,10 @@ app-root {
   --color-primary-700: #b45309; /* amber-700 */
   --color-primary-800: #92400e; /* amber-800 */
   --color-primary-900: #78350f; /* amber-900 */
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.5);
 }
 
-/* View transition animation */
+/* View transition animations */
 @keyframes view-fade-in {
   from {
     opacity: 0;
@@ -38,4 +64,99 @@ app-root {
 
 .view-fade-in {
   animation: view-fade-in 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
+}
+
+/* Pulse animation for paranormal activity indicators */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: var(--shadow-glow);
+  }
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 30px var(--color-primary-500);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Fade in animation for elements */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-in;
+}
+
+/* Slide up animation */
+@keyframes slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-up {
+  animation: slide-up 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Utility classes */
+.text-glow {
+  text-shadow: 0 0 10px currentColor;
+}
+
+.border-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-600);
+  border-radius: var(--border-radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-500);
+}
+
+/* Focus visible improvements */
+*:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* Loading spinner */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
 }

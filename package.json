@@ -3,9 +3,16 @@
   "version": "1.0.0",
   "description": "A sophisticated paranormal activity scanner.",
   "scripts": {
+    "dev": "npx -p @angular/cli@^20 ng serve",
     "build": "npx -p @angular/cli@^20 ng build",
+    "build:prod": "npx -p @angular/cli@^20 ng build --configuration production",
     "sync:android": "npx cap sync android",
-    "open:android": "npx cap open android"
+    "open:android": "npx cap open android",
+    "sync:ios": "npx cap sync ios",
+    "open:ios": "npx cap open ios",
+    "cap:sync": "npx cap sync",
+    "lint": "npx -p @angular/cli@^20 ng lint",
+    "test": "echo \"Tests coming soon\" && exit 0"
   },
   "dependencies": {
     "@angular/build": "^20.3.0",
