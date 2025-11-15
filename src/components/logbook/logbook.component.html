@@ -1,6 +1,79 @@
 <div class="flex flex-col h-full">
-  <h2 class="text-xl font-bold text-[var(--color-primary-400)] mb-4 border-b border-[var(--color-primary-500)]/20 pb-2">Entity Logbook</h2>
-  
+  <!-- Header with Statistics and Actions -->
+  <div class="mb-4 border-b border-[var(--color-primary-500)]/20 pb-3">
+    <div class="flex justify-between items-center mb-2">
+      <h2 class="text-xl font-bold text-[var(--color-primary-400)]">Entity Logbook</h2>
+      @if (detections.length > 0) {
+        <button
+          (click)="toggleActions()"
+          class="p-2 hover:bg-[var(--color-primary-500)]/20 rounded-lg transition-colors"
+          title="Actions">
+          <svg class="w-5 h-5 text-[var(--color-primary-400)]" fill="currentColor" viewBox="0 0 20 20">
+            <path d="M10 6a2 2 0 110-4 2 2 0 010 4zM10 12a2 2 0 110-4 2 2 0 010 4zM10 18a2 2 0 110-4 2 2 0 010 4z"/>
+          </svg>
+        </button>
+      }
+    </div>
+
+    <!-- Statistics Bar -->
+    @if (detections.length > 0) {
+      <div class="flex gap-4 text-xs mb-2">
+        <div>
+          <span class="text-gray-400">Total:</span>
+          <span class="text-[var(--color-primary-300)] font-bold ml-1">{{ totalDetections() }}</span>
+        </div>
+        <div>
+          <span class="text-gray-400">Contained:</span>
+          <span class="text-blue-300 font-bold ml-1">{{ containedCount() }}</span>
+        </div>
+        <div>
+          <span class="text-gray-400">Active:</span>
+          <span class="text-red-300 font-bold ml-1">{{ activeThreats() }}</span>
+        </div>
+      </div>
+
+      <!-- Action Buttons (Collapsible) -->
+      @if (showActions()) {
+        <div class="flex flex-wrap gap-2 p-3 bg-black/40 border border-[var(--color-primary-500)]/20 rounded-lg animate-fade-in">
+          <button
+            (click)="exportJSON()"
+            class="flex items-center gap-1 px-3 py-1.5 bg-[var(--color-primary-700)]/50 hover:bg-[var(--color-primary-600)]/50 rounded text-xs transition-colors">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+            Export JSON
+          </button>
+          <button
+            (click)="exportCSV()"
+            class="flex items-center gap-1 px-3 py-1.5 bg-[var(--color-primary-700)]/50 hover:bg-[var(--color-primary-600)]/50 rounded text-xs transition-colors">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+            Export CSV
+          </button>
+          <button
+            (click)="shareAll()"
+            class="flex items-center gap-1 px-3 py-1.5 bg-blue-700/50 hover:bg-blue-600/50 rounded text-xs transition-colors">
+            <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+              <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"/>
+            </svg>
+            Share All
+          </button>
+          @if (selectedEntity()) {
+            <button
+              (click)="shareEntity()"
+              class="flex items-center gap-1 px-3 py-1.5 bg-teal-700/50 hover:bg-teal-600/50 rounded text-xs transition-colors">
+              <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20">
+                <path d="M15 8a3 3 0 10-2.977-2.63l-4.94 2.47a3 3 0 100 4.319l4.94 2.47a3 3 0 10.895-1.789l-4.94-2.47a3.027 3.027 0 000-.74l4.94-2.47C13.456 7.68 14.19 8 15 8z"/>
+              </svg>
+              Share Selected
+            </button>
+          }
+        </div>
+      }
+    }
+  </div>
+
   @if (isLoading) {
     <div class="flex flex-col items-center justify-center flex-grow text-center p-4 bg-gray-800/30 rounded-lg animate-pulse">
       <svg class="w-12 h-12 text-[var(--color-primary-400)] mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">

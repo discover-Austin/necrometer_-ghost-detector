@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, signal, inject, AfterViewInit, OnDestroy, computed, effect, ViewChild, ElementRef, Renderer2 } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, AfterViewInit, OnDestroy, computed, effect, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ScannerComponent } from './components/scanner/scanner.component';
 import { LogbookComponent } from './components/logbook/logbook.component';
@@ -7,6 +7,10 @@ import { EvpComponent } from './components/evp/evp.component';
 import { EchoesComponent } from './components/echoes/echoes.component';
 import { UpgradeComponent } from './components/upgrade/upgrade.component';
 import { ToastComponent } from './components/toast/toast.component';
+import { SettingsComponent } from './components/settings/settings.component';
+import { AchievementsComponent } from './components/achievements/achievements.component';
+import { StatsComponent } from './components/stats/stats.component';
+import { DialogComponent } from './components/dialog/dialog.component';
 import { GeminiService } from './services/gemini.service';
 import { DetectedEntity, DetectionEvent } from './types';
 import { DeviceStateService } from './services/device-state.service';
@@ -18,8 +22,17 @@ import { PersistenceService } from './services/persistence.service';
 import { SensorService } from './services/sensor.service';
 import { PluginListenerHandle } from '@capacitor/core';
 import { App } from '@capacitor/app';
+import { NetworkService } from './services/network.service';
+import { AnalyticsService } from './services/analytics.service';
+import { AchievementService } from './services/achievement.service';
+import { InvestigationSessionService } from './services/investigation-session.service';
+import { HapticService } from './services/haptic.service';
+import { ThemeService } from './services/theme.service';
+import { GeolocationService } from './services/geolocation.service';
+import { PerformanceService } from './services/performance.service';
+import { ToastService } from './services/toast.service';
 
-type View = 'scanner' | 'vision' | 'logbook' | 'evp' | 'echoes' | 'store';
+type View = 'scanner' | 'vision' | 'logbook' | 'evp' | 'echoes' | 'store' | 'settings' | 'achievements' | 'stats';
 
 @Component({
   selector: 'app-root',
@@ -34,25 +47,47 @@ type View = 'scanner' | 'vision' | 'logbook' | 'evp' | 'echoes' | 'store';
     EchoesComponent,
     UpgradeComponent,
     ToastComponent,
+    SettingsComponent,
+    AchievementsComponent,
+    StatsComponent,
+    DialogComponent,
   ],
   host: {
     '[class.pro-theme]': 'upgradeService.isPro()',
   }
 })
 export class AppComponent implements AfterViewInit, OnDestroy {
+  // Core services
   private persistenceService = inject(PersistenceService);
+  private geminiService = inject(GeminiService);
+  private sensorService = inject(SensorService);
+
+  // UI state services
+  deviceState = inject(DeviceStateService);
+  upgradeService = inject(UpgradeService);
+  audioService = inject(AudioService);
+
+  // New enhanced services
+  private network = inject(NetworkService);
+  private analytics = inject(AnalyticsService);
+  private achievements = inject(AchievementService);
+  private sessions = inject(InvestigationSessionService);
+  private haptic = inject(HapticService);
+  theme = inject(ThemeService);
+  private geolocation = inject(GeolocationService);
+  private performance = inject(PerformanceService);
+  private toast = inject(ToastService);
+
+  // View and state
   activeView = signal<View>('scanner');
   detections = signal<DetectedEntity[]>(this.persistenceService.loadDetections());
   isLoading = signal(false);
   error = signal<string | null>(null);
   manifestationImage = signal<string | null>(null);
   cameraPermissionError = signal<string | null>(null);
-  
-  private geminiService = inject(GeminiService);
-  deviceState = inject(DeviceStateService);
-  upgradeService = inject(UpgradeService);
-  audioService = inject(AudioService);
-  private sensorService = inject(SensorService);
+  hasNewDetections = signal(false);
+
+  // Camera and app state
   isCameraActive = false;
   private isAudioInitialized = false;
   private appStateListener: PluginListenerHandle | null = null;
@@ -60,42 +95,69 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mainContent') mainContentRef!: ElementRef<HTMLElement>;
 
   constructor() {
+    // Audio reactive to EMF
     effect(() => {
       this.audioService.updateStaticLevel(this.deviceState.emfReading());
     });
 
-    // Save detections to local storage whenever they change
+    // Auto-save detections
     effect(() => {
       this.persistenceService.saveDetections(this.detections());
     });
 
-    // Animate view changes
+    // Animate view transitions with haptic feedback
     effect(() => {
-      this.activeView(); // depend on activeView
+      const view = this.activeView();
       if (this.mainContentRef) {
         const element = this.mainContentRef.nativeElement;
         element.classList.remove('view-fade-in');
-        // Trigger reflow to restart animation
-        void element.offsetWidth; 
+        void element.offsetWidth;
         element.classList.add('view-fade-in');
       }
+      // Track feature usage
+      this.analytics.trackFeatureUse(view);
+      this.achievements.trackFeatureUse(view);
     });
   }
 
   async ngAfterViewInit() {
+    const initTimer = this.performance.startTimer('app-initialization');
+
+    // Hide splash screen
     await SplashScreen.hide();
+
+    // Track session start
+    this.analytics.trackSessionStart();
+
+    // Initialize camera
     await this.startCamera();
+
+    // Start sensor services
     await this.sensorService.start();
+
+    // Request location permission (non-blocking)
+    this.geolocation.requestPermission().catch(() => {
+      // Silent fail - user can enable later in settings
+    });
+
+    // Monitor performance
+    this.performance.monitorLongTasks();
+    this.performance.getCoreWebVitals();
+
+    // Listen for app state changes
     this.appStateListener = await App.addListener('appStateChange', ({ isActive }) => {
       if (isActive && this.cameraPermissionError() && !this.isCameraActive) {
         this.startCamera();
       }
     });
+
+    initTimer();
   }
 
   ngOnDestroy() {
     this.stopCamera();
     this.sensorService.stop();
+    this.geolocation.stopTracking();
     this.appStateListener?.remove();
   }
 
@@ -198,49 +260,82 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  handleDetection(event: DetectionEvent) {
+  async handleDetection(event: DetectionEvent) {
     if (this.isLoading()) return;
-    
+
+    const detectionTimer = this.performance.startTimer('entity-detection');
+
     this.isLoading.set(true);
     this.error.set(null);
     this.activeView.set('logbook');
     this.audioService.playDetectionSound();
 
-    this.geminiService.getEntityProfile(event.strength)
-      .then(profile => {
-        const newDetection: DetectedEntity = {
-          ...profile,
-          id: Date.now(),
-          timestamp: new Date(),
-          emfReading: event.emf,
-        };
-        this.detections.update(currentDetections => [newDetection, ...currentDetections]);
-        this.trackNewDetection();
-      })
-      .catch(err => {
-        console.error('Error getting entity profile:', err);
-        this.error.set('AI analysis failed. The connection to the spectral plane may be unstable.');
-      })
-      .finally(() => {
-        this.isLoading.set(false);
-      });
+    // Haptic feedback for detection
+    await this.haptic.paranormalPulse();
+
+    // Get current location
+    const location = await this.geolocation.getCurrentPosition();
+
+    try {
+      const profile = await this.geminiService.getEntityProfile(event.strength);
+
+      const newDetection: DetectedEntity = {
+        ...profile,
+        id: Date.now(),
+        timestamp: new Date(),
+        emfReading: event.emf,
+      };
+
+      this.detections.update(currentDetections => [newDetection, ...currentDetections]);
+
+      // Add to current investigation session
+      this.sessions.addDetection(newDetection);
+
+      // Track in achievements
+      this.achievements.trackDetection(event.emf);
+
+      // Track in analytics
+      this.analytics.trackDetection(newDetection.type, event.strength, event.emf);
+
+      // Show success notification
+      this.toast.success(`${newDetection.name} detected!`);
+
+      this.trackNewDetection();
+
+      detectionTimer();
+    } catch (err) {
+      console.error('Error getting entity profile:', err);
+      this.error.set('AI analysis failed. The connection to the spectral plane may be unstable.');
+      this.toast.error('Detection failed. Please try again.');
+      this.analytics.trackError('detection_failed', 'gemini_api');
+      detectionTimer();
+    } finally {
+      this.isLoading.set(false);
+    }
   }
 
-  handleContainEntity(entityToContain: DetectedEntity) {
+  async handleContainEntity(entityToContain: DetectedEntity) {
+    // Haptic feedback for containment
+    await this.haptic.containmentSuccess();
+
     this.detections.update(currentDetections =>
       currentDetections.map(d =>
         d.id === entityToContain.id ? { ...d, contained: true, instability: 0 } : d
       )
     );
+
+    // Track containment
+    this.achievements.trackContainment();
+    this.analytics.trackContainment(entityToContain.type, entityToContain.name);
+    this.toast.success(`${entityToContain.name} successfully contained!`);
   }
 
-  changeView(view: View) {
-    this.initializeAudio();
+  async changeView(view: View) {
+    await this.initializeAudio();
     this.audioService.playUISound();
+    await this.haptic.selection();
     this.activeView.set(view);
   }
-
-  hasNewDetections = signal(false);
 
   trackNewDetection() {
     if (this.activeView() !== 'logbook') {
@@ -248,10 +343,11 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  viewLogbook() {
-    this.initializeAudio();
+  async viewLogbook() {
+    await this.initializeAudio();
     this.audioService.playUISound();
-    this.changeView('logbook');
+    await this.haptic.selection();
+    this.activeView.set('logbook');
     this.hasNewDetections.set(false);
   }
 

@@ -1,9 +1,14 @@
-import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter, signal, inject } from '@angular/core';
+import { Component, ChangeDetectionStrategy, Input, Output, EventEmitter, signal, inject, computed } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DetectedEntity, CrossReferenceResult, EmotionalResonanceResult, ContainmentRitual } from '../../types';
 import { UpgradeService } from '../../services/upgrade.service';
 import { GeminiService } from '../../services/gemini.service';
 import { AudioService } from '../../services/audio.service';
+import { ExportImportService } from '../../services/export-import.service';
+import { ShareService } from '../../services/share.service';
+import { AnalyticsService } from '../../services/analytics.service';
+import { HapticService } from '../../services/haptic.service';
+import { ToastService } from '../../services/toast.service';
 
 type LabState = 'idle' | 'cross-referencing' | 'scanning-resonance' | 'containing';
 
@@ -22,7 +27,8 @@ export class LogbookComponent {
   selectedEntity = signal<DetectedEntity | null>(null);
   labState = signal<LabState>('idle');
   labError = signal<string | null>(null);
-  
+  showActions = signal(false);
+
   crossReferenceResult = signal<CrossReferenceResult | null>(null);
   emotionalResonanceResult = signal<EmotionalResonanceResult | null>(null);
   containmentResult = signal<ContainmentRitual | null>(null);
@@ -30,6 +36,11 @@ export class LogbookComponent {
   private upgradeService = inject(UpgradeService);
   private geminiService = inject(GeminiService);
   private audioService = inject(AudioService);
+  private exportImport = inject(ExportImportService);
+  private share = inject(ShareService);
+  private analytics = inject(AnalyticsService);
+  private haptic = inject(HapticService);
+  private toast = inject(ToastService);
 
   selectEntity(entity: DetectedEntity) {
     if (this.selectedEntity()?.id === entity.id) {
@@ -108,5 +119,63 @@ export class LogbookComponent {
     if (entity.emfReading > 95) return 'border-yellow-500/50';
     if (entity.emfReading > 90) return 'border-teal-400/50';
     return 'border-[var(--color-primary-500)]/50';
+  }
+
+  // Computed statistics
+  totalDetections = computed(() => this.detections.length);
+  containedCount = computed(() => this.detections.filter(d => d.contained).length);
+  activeThreats = computed(() => this.detections.filter(d => !d.contained).length);
+
+  toggleActions() {
+    this.showActions.update(v => !v);
+    this.haptic.light();
+  }
+
+  async exportJSON() {
+    try {
+      await this.exportImport.exportToJSON(this.detections);
+      this.analytics.trackEvent('export_logbook', 'data', { format: 'json', count: this.detections.length });
+      this.toast.success('Logbook exported to JSON');
+      this.haptic.medium();
+    } catch (error) {
+      this.toast.error('Failed to export logbook');
+      this.analytics.trackError('export_failed', 'logbook');
+    }
+  }
+
+  async exportCSV() {
+    try {
+      await this.exportImport.exportToCSV(this.detections);
+      this.analytics.trackEvent('export_logbook', 'data', { format: 'csv', count: this.detections.length });
+      this.toast.success('Logbook exported to CSV');
+      this.haptic.medium();
+    } catch (error) {
+      this.toast.error('Failed to export logbook');
+      this.analytics.trackError('export_failed', 'logbook');
+    }
+  }
+
+  async shareEntity() {
+    const entity = this.selectedEntity();
+    if (!entity) return;
+
+    try {
+      await this.share.shareEntity(entity);
+      this.analytics.trackEvent('share_entity', 'social', { entityType: entity.type });
+      this.haptic.light();
+    } catch (error) {
+      this.toast.error('Failed to share entity');
+    }
+  }
+
+  async shareAll() {
+    try {
+      await this.share.shareMultipleEntities(this.detections);
+      this.analytics.trackEvent('share_all_entities', 'social', { count: this.detections.length });
+      this.toast.success('Logbook shared successfully');
+      this.haptic.medium();
+    } catch (error) {
+      this.toast.error('Failed to share logbook');
+    }
   }
 }
