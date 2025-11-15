@@ -12,6 +12,7 @@ A sophisticated paranormal activity scanner powered by AI. Detect, analyze, and 
 
 ## ✨ Features
 
+### Core Detection Features
 - **📡 Real-time Scanner**: Detect paranormal entities using device sensors and EMF readings
 - **👁️ Vision Mode**: AI-powered scene analysis using your device camera
 - **🎤 EVP Analyzer**: Electronic Voice Phenomenon detection and analysis
@@ -20,6 +21,23 @@ A sophisticated paranormal activity scanner powered by AI. Detect, analyze, and 
 - **🔮 Spectral Map**: Visualize paranormal hotspots in your area
 - **🛡️ Containment Rituals**: AI-generated procedures to contain detected entities
 - **⚡ Pro Mode**: Unlock advanced features and enhanced detection capabilities
+
+### Advanced Features (NEW!)
+- **🎯 Toast Notifications**: Real-time, context-aware notifications for all app events
+- **📳 Haptic Feedback**: Tactile feedback for detections, containments, and UI interactions
+- **📶 Network Monitoring**: Automatic offline detection with queued request syncing
+- **💾 Advanced Caching**: Smart caching with TTL and automatic cleanup
+- **📊 Analytics & Telemetry**: Track usage patterns, performance metrics, and detection statistics
+- **🌓 Dark Mode**: Auto, light, or dark theme with system preference detection
+- **📤 Share Detections**: Share individual or multiple detections via native share
+- **📍 Geolocation Tracking**: Track investigation locations with distance calculations
+- **💿 Export/Import**: Backup and restore data in JSON or CSV format
+- **🎬 Investigation Sessions**: Organize detections into tracked investigation sessions
+- **⚡ Performance Monitoring**: Real-time performance tracking and Core Web Vitals
+- **🏆 Achievements**: Unlock achievements and track your paranormal investigation progress
+- **🌐 PWA Support**: Install as a Progressive Web App with offline capabilities
+- **🔧 ESLint & Prettier**: Consistent code quality and formatting
+- **🎨 Enhanced UI**: Improved animations, transitions, and visual effects
 
 ## 🚀 Quick Start
 

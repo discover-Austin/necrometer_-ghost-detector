@@ -6,6 +6,7 @@ import { VisionComponent } from './components/vision/vision.component';
 import { EvpComponent } from './components/evp/evp.component';
 import { EchoesComponent } from './components/echoes/echoes.component';
 import { UpgradeComponent } from './components/upgrade/upgrade.component';
+import { ToastComponent } from './components/toast/toast.component';
 import { GeminiService } from './services/gemini.service';
 import { DetectedEntity, DetectionEvent } from './types';
 import { DeviceStateService } from './services/device-state.service';
@@ -32,6 +33,7 @@ type View = 'scanner' | 'vision' | 'logbook' | 'evp' | 'echoes' | 'store';
     EvpComponent,
     EchoesComponent,
     UpgradeComponent,
+    ToastComponent,
   ],
   host: {
     '[class.pro-theme]': 'upgradeService.isPro()',
