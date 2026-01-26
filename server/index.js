@@ -127,6 +127,70 @@ app.post('/api/analyze-scene', requireJwt, async (req, res) => {
   }
 });
 
+// Generate entity profile endpoint
+app.post('/api/generate-entity-profile', requireJwt, async (req, res) => {
+  try {
+    const { strength } = req.body;
+    if (!strength) return res.status(400).json({ error: 'strength parameter required' });
+
+    const getStrengthDescription = (s) => {
+      switch (s) {
+        case 'weak': return 'faint and fleeting';
+        case 'moderate': return 'clear and present';
+        case 'strong': return 'powerful and disruptive';
+        case 'critical': return 'overwhelming and physically manifesting';
+        default: return 'of unknown power';
+      }
+    };
+
+    const strengthDescription = getStrengthDescription(strength);
+    const profilePrompt = `Generate a short, spooky, and mysterious profile for a paranormal entity. The energy signature is ${strengthDescription}. The profile must include a plausible name, a type (e.g., Poltergeist, Shade, Revenant, Wraith, Banshee, Phantom, Lingering Spirit), a one-paragraph backstory, and an 'instability' rating (a number from 50 to 100). The entity is not yet 'contained'. Do not use markdown.`;
+
+    const profileResponse = await ai.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: profilePrompt,
+      config: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            name: { type: Type.STRING, description: 'The name of the entity.' },
+            type: { type: Type.STRING, description: 'The classification of the spirit.' },
+            backstory: { type: Type.STRING, description: 'A short, unsettling backstory.' },
+            instability: { type: Type.NUMBER, description: 'A rating from 50-100 of how unstable the entity is.' },
+            contained: { type: Type.BOOLEAN, description: 'Always false for new entities.' }
+          },
+          required: ['name', 'type', 'backstory', 'instability', 'contained']
+        },
+        temperature: 1.1,
+        topP: 0.95
+      }
+    });
+
+    const profileData = JSON.parse(profileResponse.text.trim());
+
+    // Generate glyph for the entity
+    const glyphPrompt = `Create a single, minimalist, arcane, mystical sigil or glyph that represents a paranormal entity. The entity is a "${profileData.type}" known as "${profileData.name}". The glyph should be a stark white design on a pure black background. It should look ancient and mysterious. It should not be a picture of the entity, but a symbolic representation.`;
+
+    const imageResponse = await ai.models.generateImages({
+      model: 'imagen-3.0-generate-002',
+      prompt: glyphPrompt,
+      config: {
+        numberOfImages: 1,
+        outputMimeType: 'image/png',
+        aspectRatio: '1:1'
+      }
+    });
+
+    const glyphB64 = imageResponse.generatedImages[0].image.imageBytes;
+    
+    return res.json({ ...profileData, glyphB64 });
+  } catch (err) {
+    console.error('generate-entity-profile error', err);
+    return res.status(500).json({ error: String(err) });
+  }
+});
+
 // Generate glyph for an entity profile
 app.post('/api/generate-glyph', requireJwt, async (req, res) => {
   try {
