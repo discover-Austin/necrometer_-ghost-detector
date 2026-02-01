@@ -88,7 +88,7 @@ export class VisionComponent implements OnInit, OnDestroy, OnChanges {
       await CameraPreview.stop().catch(() => undefined);
       await CameraPreview.start({
         position: 'rear',
-        toBack: true,
+        toBack: false,
         parent: 'vision-camera-container',
         className: 'camera-preview',
       });
@@ -163,7 +163,7 @@ export class VisionComponent implements OnInit, OnDestroy, OnChanges {
       const newEntities = this.detections
         .filter(d => !currentEntities.some(e => e.id === d.id))
         .map(d => this.createAREntity(d));
-      
+
       return [
         ...currentEntities.filter(e => detectionMap.has(e.id)),
         ...newEntities

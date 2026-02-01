@@ -281,8 +281,12 @@ app.post('/api/cross-reference', requireJwt, async (req, res) => {
   }
 });
 
-const server = app.listen(PORT, () => {
-  console.log(`Necrometer proxy listening on ${PORT}`);
-});
+// Export the app for Vercel (serverless)
+module.exports = app;
 
-module.exports = server;
+// Only listen if run directly (local development)
+if (require.main === module) {
+  app.listen(PORT, () => {
+    console.log(`Necrometer proxy listening on ${PORT}`);
+  });
+}
