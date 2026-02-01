@@ -66,6 +66,17 @@ app.post('/issue-token', (req, res) => {
 
 app.get('/health', (req, res) => res.json({ ok: true }));
 
+app.post('/transcribe', async (req, res) => {
+  const { audioBase64, mimeType } = req.body || {};
+  if (!audioBase64) {
+    return res.status(400).json({ error: 'AUDIO_REQUIRED' });
+  }
+  if (!process.env.TRANSCRIBE_API_KEY) {
+    return res.status(501).json({ error: 'TRANSCRIPTION_NOT_CONFIGURED' });
+  }
+  return res.status(501).json({ error: 'TRANSCRIPTION_NOT_CONFIGURED' });
+});
+
 // Analyze scene endpoint: accepts base64 image and returns SceneAnalysisResult
 app.post('/api/analyze-scene', requireJwt, async (req, res) => {
   try {

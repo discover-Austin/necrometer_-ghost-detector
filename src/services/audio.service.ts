@@ -1,4 +1,5 @@
 import { Injectable } from '@angular/core';
+import { VoiceRecorder } from 'capacitor-voice-recorder';
 
 @Injectable({
   providedIn: 'root',
@@ -9,6 +10,7 @@ export class AudioService {
   private staticSource: AudioBufferSourceNode | null = null;
   private isInitialized = false;
   private isStaticPlaying = false;
+  private lastRecordedBlob: Blob | null = null;
 
   private sounds: { [key: string]: AudioBuffer | null } = {
     uiClick: null,
@@ -29,6 +31,74 @@ export class AudioService {
       console.error(`Failed to load sound: ${url}`, error);
       return null;
     }
+  }
+
+  async startRecording(): Promise<void> {
+    const permission = await VoiceRecorder.requestAudioRecordingPermission();
+    if (!permission.value) {
+      throw new Error('Microphone permission denied');
+    }
+    const canRecord = await VoiceRecorder.canDeviceVoiceRecord();
+    if (!canRecord.value) {
+      throw new Error('Voice recording is not supported on this device');
+    }
+    await VoiceRecorder.startRecording();
+  }
+
+  async stopRecording(): Promise<Blob> {
+    const result = await VoiceRecorder.stopRecording();
+    const data = result.value?.recordDataBase64;
+    const mimeType = result.value?.mimeType || 'audio/wav';
+    if (!data) {
+      throw new Error('Recording failed to produce audio data');
+    }
+    const blob = this.base64ToBlob(data, mimeType);
+    this.lastRecordedBlob = blob;
+    return blob;
+  }
+
+  async uploadToTranscribe(blob: Blob, endpoint: string): Promise<{ transcript: string }> {
+    const audioBase64 = await this.blobToBase64(blob);
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        audioBase64,
+        mimeType: blob.type || 'audio/wav',
+      }),
+    });
+    if (response.status === 501) {
+      const data = await response.json().catch(() => ({}));
+      if (data?.error === 'TRANSCRIPTION_NOT_CONFIGURED') {
+        throw new Error('Transcription not configured');
+      }
+    }
+    if (!response.ok) {
+      throw new Error(`Transcription failed: ${response.status} ${await response.text()}`);
+    }
+    return response.json();
+  }
+
+  getLastRecordedBlob(): Blob | null {
+    return this.lastRecordedBlob;
+  }
+
+  private base64ToBlob(base64: string, mimeType: string): Blob {
+    const byteCharacters = atob(base64);
+    const byteNumbers = new Array(byteCharacters.length);
+    for (let i = 0; i < byteCharacters.length; i++) {
+      byteNumbers[i] = byteCharacters.charCodeAt(i);
+    }
+    const byteArray = new Uint8Array(byteNumbers);
+    return new Blob([byteArray], { type: mimeType });
+  }
+
+  private async blobToBase64(blob: Blob): Promise<string> {
+    const buffer = await blob.arrayBuffer();
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    bytes.forEach((b) => (binary += String.fromCharCode(b)));
+    return btoa(binary);
   }
 
   async init() {
