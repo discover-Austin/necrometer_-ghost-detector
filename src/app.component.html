@@ -1,5 +1,5 @@
 <!-- Main container -->
-<div class="relative flex flex-col h-screen max-w-md mx-auto bg-obsidian-950 border-x border-spectral-900/50 shadow-2xl shadow-spectral-500/10 overflow-hidden font-sans selection:bg-spectral-500/30">
+<div class="relative flex flex-col min-h-screen max-w-md mx-auto bg-obsidian-950 border-x border-spectral-900/50 shadow-2xl shadow-spectral-500/10 overflow-hidden font-sans selection:bg-spectral-500/30">
   
   <!-- Global Static/Glitch Overlay -->
   <div class="absolute inset-0 pointer-events-none z-20 vision-overlay mix-blend-overlay" [style.opacity]="globalStaticOpacity()"></div>
@@ -34,22 +34,23 @@
     </header>
 
     <!-- Main Content Area -->
-    <main #mainContent class="flex-grow relative overflow-y-auto overflow-x-hidden scrollbar-hide">
+    <main #mainContent class="flex-1 min-h-0 relative overflow-y-auto overflow-x-hidden scrollbar-hide">
         <!-- Grid Background Pattern -->
         <div class="absolute inset-0 z-0 opacity-[0.03]" 
              style="background-image: radial-gradient(#22d3ee 1px, transparent 1px); background-size: 20px 20px;">
         </div>
 
-      <div class="relative z-10 min-h-full p-4 pb-20">
+      <div class="relative z-10 flex flex-col h-full p-4">
         @switch (activeView()) {
             @case ('scanner') {
-              <app-scanner (detection)="handleDetection($event)"></app-scanner>
+              <app-scanner class="flex-1" (detection)="handleDetection($event)"></app-scanner>
             }
             @case ('vision') {
-              <app-vision [detections]="detections()"></app-vision>
+              <app-vision class="flex-1" [detections]="detections()"></app-vision>
             }
             @case ('logbook') {
               <app-logbook 
+                class="flex-1"
                 [detections]="detections()" 
                 [isLoading]="isLoading()" 
                 [error]="error()"
@@ -57,13 +58,13 @@
               </app-logbook>
             }
             @case ('evp') {
-              <app-evp></app-evp>
+              <app-evp class="flex-1"></app-evp>
             }
             @case ('echoes') {
-              <app-echoes></app-echoes>
+              <app-echoes class="flex-1"></app-echoes>
             }
             @case ('store') {
-              <app-upgrade></app-upgrade>
+              <app-upgrade class="flex-1"></app-upgrade>
             }
           }
       </div>

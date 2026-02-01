@@ -12,6 +12,7 @@ app-root {
   background-color: transparent !important;
   font-family: 'Inter', sans-serif;
   overflow: hidden;
+  height: 100%;
   /* Prevent scrolling on main body */
 }
 

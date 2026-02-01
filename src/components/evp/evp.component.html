@@ -27,15 +27,28 @@
           <p class="font-bold text-lg">ANALYZING STATIC...</p>
         </div>
       }
-      @case ('result') {
-        @if (analysisResult(); as result) {
-            <div class="text-left w-full p-3 bg-black/30 rounded-md border border-gray-700">
-                <p class="text-sm text-gray-400">Deciphered Message:</p>
-                <p class="text-2xl text-[var(--color-primary-300)] font-mono tracking-widest my-1">"{{ result.transcription }}"</p>
-                <p class="text-xs text-gray-500">Analysis Confidence: {{ (result.confidence * 100).toFixed(0) }}%</p>
-            </div>
-        }
-      }
+       @case ('result') {
+         @if (interpretation(); as result) {
+             <div class="text-left w-full p-3 bg-black/30 rounded-md border border-gray-700 space-y-2">
+                 <p class="text-sm text-gray-400">Interpretation Summary:</p>
+                 <p class="text-lg text-[var(--color-primary-300)] font-mono tracking-wide">"{{ result.summary }}"</p>
+                 <p class="text-xs text-gray-500">Confidence: {{ (result.confidence * 100).toFixed(0) }}%</p>
+                 <div class="text-xs text-gray-400">
+                   <p class="font-semibold text-gray-300">Notable phrases:</p>
+                   <ul class="list-disc list-inside">
+                     @for (phrase of result.notable_phrases; track phrase) {
+                       <li>{{ phrase }}</li>
+                     }
+                   </ul>
+                 </div>
+                 <p class="text-xs text-gray-500">Tone: {{ result.tone }}</p>
+                 @if (result.flags?.length) {
+                   <p class="text-xs text-red-300">Flags: {{ result.flags.join(', ') }}</p>
+                 }
+                 <p class="text-xs text-gray-500">Requires review: {{ result.requires_review ? 'Yes' : 'No' }}</p>
+             </div>
+         }
+       }
     }
     @if(error()) {
         <p class="text-red-400 text-sm mt-2 p-2 bg-red-900/50 rounded-md">{{ error() }}</p>

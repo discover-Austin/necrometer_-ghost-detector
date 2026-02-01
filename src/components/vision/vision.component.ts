@@ -32,6 +32,7 @@ export class VisionComponent implements OnInit, OnDestroy, OnChanges {
 
   isCameraActive = false;
   cameraPermissionError = signal<string | null>(null);
+  cameraStatusMessage = signal<string | null>(null);
   private appStateListener: any | null = null;
 
   isScanningEnvironment = signal(false);
@@ -83,13 +84,17 @@ export class VisionComponent implements OnInit, OnDestroy, OnChanges {
   async startCamera() {
     if (this.isCameraActive) return;
     try {
+      this.cameraStatusMessage.set('Requesting camera permission...');
+      await CameraPreview.stop().catch(() => undefined);
       await CameraPreview.start({
         position: 'rear',
         toBack: true,
         parent: 'vision-camera-container',
+        className: 'camera-preview',
       });
       this.isCameraActive = true;
       this.cameraPermissionError.set(null);
+      this.cameraStatusMessage.set(null);
     } catch (e) {
       this.handleCameraError(e);
     }
@@ -98,6 +103,7 @@ export class VisionComponent implements OnInit, OnDestroy, OnChanges {
   async stopCamera() {
     if (!this.isCameraActive) return;
     this.isCameraActive = false;
+    this.cameraStatusMessage.set(null);
     try {
       await CameraPreview.stop();
     } catch (e) {
@@ -107,10 +113,17 @@ export class VisionComponent implements OnInit, OnDestroy, OnChanges {
 
   private handleCameraError(err: unknown) {
     const errorMessage = err instanceof Error ? err.message : String(err);
+    this.isCameraActive = false;
+    this.cameraStatusMessage.set(null);
     if (errorMessage.toLowerCase().includes('permission')) {
       this.cameraPermissionError.set("Camera permission denied. Please enable camera access in your device settings.");
+      return;
+    }
+    if (errorMessage.toLowerCase().includes('not found') || errorMessage.toLowerCase().includes('requested device not found')) {
+      this.cameraPermissionError.set('Camera preview not supported on this device.');
+      return;
     } else {
-      this.cameraPermissionError.set("Failed to start the camera. Please ensure permissions are granted and try again.");
+      this.cameraPermissionError.set(`Failed to start the camera: ${errorMessage}`);
     }
   }
 
@@ -135,7 +148,8 @@ export class VisionComponent implements OnInit, OnDestroy, OnChanges {
       setTimeout(() => this.sceneObjects.set([]), 15000);
     } catch (err) {
       console.error('Environment scan failed:', err);
-      this.scanError.set('Scene analysis failed. Connection unstable.');
+      const message = err instanceof Error ? err.message : String(err);
+      this.scanError.set(`Scene analysis failed: ${message}`);
       this.upgradeService.addCredits(this.scanCost); // Refund on failure
       setTimeout(() => this.scanError.set(null), 4000);
     } finally {

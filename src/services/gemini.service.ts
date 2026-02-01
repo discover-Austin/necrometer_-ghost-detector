@@ -313,6 +313,52 @@ export class GeminiService {
     return JSON.parse(response.text.trim()) as EVPAnalysis;
   }
 
+  async interpretTranscript(transcript: string, metadata: Record<string, any> = {}): Promise<{
+    summary: string;
+    notable_phrases: string[];
+    confidence: number;
+    tone: 'neutral' | 'distressed' | 'angry' | 'calm' | 'unknown';
+    flags: string[];
+    requires_review: boolean;
+  }> {
+    if (!transcript || transcript.trim().length === 0) {
+      throw new Error('Transcript is empty.');
+    }
+
+    const prompt = `You are an EVP analyst. Interpret the provided transcript text only. Return a concise summary of the message, 1-3 notable phrases, an overall confidence between 0 and 1, the emotional tone (neutral|distressed|angry|calm|unknown), any flags (e.g., "distorted", "whisper", "background noise"), and a requires_review boolean. Respond in JSON with keys: summary, notable_phrases (array), confidence, tone, flags (array), requires_review. Transcript: "${transcript}". Metadata: ${JSON.stringify(metadata)}.`;
+
+    this.ensureConfigured();
+    const response = await this.ai!.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            summary: { type: Type.STRING },
+            notable_phrases: { type: Type.ARRAY, items: { type: Type.STRING } },
+            confidence: { type: Type.NUMBER },
+            tone: { type: Type.STRING },
+            flags: { type: Type.ARRAY, items: { type: Type.STRING } },
+            requires_review: { type: Type.BOOLEAN }
+          },
+          required: ['summary', 'notable_phrases', 'confidence', 'tone', 'flags', 'requires_review']
+        }
+      }
+    });
+
+    const parsed = JSON.parse(response.text.trim()) as {
+      summary: string;
+      notable_phrases: string[];
+      confidence: number;
+      tone: 'neutral' | 'distressed' | 'angry' | 'calm' | 'unknown';
+      flags: string[];
+      requires_review: boolean;
+    };
+    return parsed;
+  }
+
   async getTemporalEcho(): Promise<TemporalEcho> {
     const prompt = `Generate a "temporal echo" from a haunted location. This is a brief, one-paragraph description of a dramatic, tragic, or emotionally charged historical event that could leave a spiritual residue. Be vague about the exact location, but specific about the emotions and actions. Provide a title for the event and the historical era (e.g., 'Victorian', 'Prohibition', 'Colonial').`;
     // Use proxy if available
