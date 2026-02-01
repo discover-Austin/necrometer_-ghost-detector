@@ -1,1 +1,0 @@
-{"ast":null,"code":"export const RecordingStatus = {\n  RECORDING: 'RECORDING',\n  PAUSED: 'PAUSED',\n  NONE: 'NONE'\n};\n//# sourceMappingURL=definitions.js.map","map":null,"metadata":{},"sourceType":"module","externalDependencies":[]}
