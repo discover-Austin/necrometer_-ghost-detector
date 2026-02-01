@@ -1,0 +1,94 @@
+<div class="flex flex-col h-full text-white">
+  <h2 class="text-2xl font-bold text-[var(--color-primary-400)] mb-4 border-b-2 border-[var(--color-primary-700)]/50 pb-2">Entity Logbook</h2>
+
+  @if (isLoading) {
+    <div class="flex flex-col items-center justify-center flex-grow text-center p-4 bg-[var(--color-surface)]/50 rounded-lg animate-pulse">
+      <p class="text-xl text-[var(--color-primary-300)]">Analyzing Spectral Data...</p>
+    </div>
+  } @else if (error) {
+    <div class="flex flex-col items-center justify-center flex-grow text-center p-4 bg-red-900/40 rounded-lg border-2 border-red-500/60">
+      <p class="text-xl text-red-300">Analysis Failed</p>
+      <p class="text-md text-gray-300">{{ error }}</p>
+    </div>
+  } @else if (detections.length === 0) {
+    <div class="flex flex-col items-center justify-center flex-grow text-center p-4 bg-[var(--color-surface)]/50 rounded-lg">
+      <p class="text-xl text-gray-400">No entities logged.</p>
+    </div>
+  } @else {
+    <div class="space-y-4 overflow-y-auto pr-2">
+      @for (entity of detections; track entity.id) {
+        <div class="rounded-lg bg-[var(--color-surface)] border-l-4" [class.border-red-500]="!entity.contained" [class.border-blue-500]="entity.contained">
+          <button class="w-full text-left p-4" (click)="selectEntity(entity)">
+            <div class="flex justify-between items-start">
+              <div>
+                <p class="font-bold text-xl" [class.text-[var(--color-primary-300)]]="!entity.contained" [class.text-blue-400]="entity.contained">
+                  {{ entity.name }}
+                  @if(entity.contained) { <span class="text-sm font-normal text-blue-400 ml-2">[CONTAINED]</span> }
+                </p>
+                <p class="text-md text-gray-400">{{ entity.type }}</p>
+              </div>
+              <div class="text-right flex-shrink-0">
+                <p class="font-mono text-xl text-[var(--color-primary-400)]">{{ entity.emfReading.toFixed(2) }} µT</p>
+                <p class="text-sm text-gray-500">{{ entity.timestamp | date:'short' }}</p>
+              </div>
+            </div>
+          </button>
+
+          <div class="grid transition-all duration-500 ease-in-out" [class.grid-rows-[1fr]]="selectedEntity()?.id === entity.id" [class.grid-rows-[0fr]]="selectedEntity()?.id !== entity.id">
+            <div class="overflow-hidden">
+              <div class="p-4 bg-black/40 border-t-2 border-[var(--color-primary-900)]/70 space-y-4">
+                <div>
+                  <h3 class="text-xl font-bold text-[var(--color-primary-300)] mb-2">Analysis Lab</h3>
+                  <p class="text-md text-gray-300 leading-relaxed border-l-4 border-[var(--color-primary-700)]/50 pl-4">{{ entity.historicalContext }}</p>
+                </div>
+
+                @if(analysisError()) {
+                  <p class="text-red-400 text-center text-md p-3 bg-red-900/50 rounded-md border border-red-700">{{ analysisError() }}</p>
+                }
+
+                  <div class="space-y-3">
+                    <div class="bg-[var(--color-surface-light)]/50 p-3 rounded-md border border-gray-700">
+                      @if (crossReferenceResult(); as result) {
+                        <div>
+                          <h4 class="font-bold text-[var(--color-primary-400)]">Database Cross-Reference</h4>
+                          <p class="text-md mt-1">{{ result.details }}</p>
+                        </div>
+                      } @else {
+                        <button [disabled]="isAnalyzing()" (click)="runAnalysis('cross-reference')" class="w-full">
+                          <h4 class="font-bold text-[var(--color-primary-400)]">Cross-Reference (5 NC)</h4>
+                        </button>
+                      }
+                    </div>
+                    <div class="bg-[var(--color-surface-light)]/50 p-3 rounded-md border border-gray-700">
+                      @if (emotionalResonance(); as result) {
+                        <div>
+                          <h4 class="font-bold text-[var(--color-primary-400)]">Emotional Resonance</h4>
+                          <p class="text-md mt-1">{{ result.summary }}</p>
+                        </div>
+                      } @else {
+                        <button [disabled]="isAnalyzing()" (click)="runAnalysis('resonance')" class="w-full">
+                          <h4 class="font-bold text-[var(--color-primary-400)]">Resonance Scan (5 NC)</h4>
+                        </button>
+                      }
+                    </div>
+                    <div class="bg-[var(--color-surface-light)]/50 p-3 rounded-md border border-gray-700">
+                      @if (containmentRitual(); as result) {
+                        <div>
+                          <h4 class="font-bold text-blue-400">Containment Ritual</h4>
+                          <p class="text-md mt-1">{{ result.outcome }}</p>
+                        </div>
+                      } @else {
+                        <button [disabled]="isAnalyzing() || entity.contained" (click)="runAnalysis('ritual')" class="w-full">
+                          <h4 class="font-bold text-blue-400">Containment Ritual (10 NC)</h4>
+                        </button>
+                      }
+                    </div>
+                  </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>

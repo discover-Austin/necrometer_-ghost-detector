@@ -28,6 +28,7 @@
     "tailwindcss": "latest"
   },
   "devDependencies": {
+    "@angular-devkit/build-angular": "^20.3.6",
     "@capacitor/cli": "^7.4.3",
     "typescript": "~5.8.0"
   }

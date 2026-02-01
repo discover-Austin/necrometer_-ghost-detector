@@ -7,7 +7,19 @@ export class SensorService {
   orientation = signal<{ alpha: number; beta: number; gamma: number } | null>(null);
   motion = signal<{ x: number; y: number; z: number } | null>(null);
 
+  /**
+   * Magnetic field magnitude in microteslas (µT) measured via the
+   * Generic Sensor API's Magnetometer.  Remains null if the API
+   * isn't supported or permission is denied.
+   */
+  magnetometer = signal<number | null>(null);
+
   private hasPermissions = signal(false);
+
+  // Keep a reference to the magnetometer sensor so that we can
+  // stop it later.  The type is loose because `Magnetometer` isn't
+  // defined on the Window interface in TypeScript by default.
+  private magnetometerSensor: any;
 
   // Using arrow functions to preserve `this` context in event handlers
   private handleOrientation = (event: DeviceOrientationEvent) => {
@@ -52,8 +64,32 @@ export class SensorService {
     }
 
     if (this.hasPermissions()) {
-        window.addEventListener('deviceorientation', this.handleOrientation, true);
-        window.addEventListener('devicemotion', this.handleMotion, true);
+      window.addEventListener('deviceorientation', this.handleOrientation, true);
+      window.addEventListener('devicemotion', this.handleMotion, true);
+    }
+
+    // Attempt to start the magnetometer sensor if supported
+    if ('Magnetometer' in window) {
+      try {
+        // Cast window.Magnetometer to any because TypeScript doesn't know about it.
+        this.magnetometerSensor = new (window as any).Magnetometer({ frequency: 10 });
+        this.magnetometerSensor.addEventListener('reading', () => {
+          // Compute the magnitude of the magnetic field vector
+          const x: number = this.magnetometerSensor.x ?? 0;
+          const y: number = this.magnetometerSensor.y ?? 0;
+          const z: number = this.magnetometerSensor.z ?? 0;
+          const magnitude = Math.sqrt(x * x + y * y + z * z);
+          this.magnetometer.set(magnitude);
+        });
+        this.magnetometerSensor.addEventListener('error', (event: any) => {
+          console.error('Magnetometer error:', event.error);
+        });
+        this.magnetometerSensor.start();
+      } catch (err) {
+        console.error('Failed to start magnetometer:', err);
+      }
+    } else {
+      console.warn('Magnetometer API not supported in this browser.');
     }
   }
 
@@ -61,6 +97,14 @@ export class SensorService {
     if (typeof window !== 'undefined') {
       window.removeEventListener('deviceorientation', this.handleOrientation, true);
       window.removeEventListener('devicemotion', this.handleMotion, true);
+    }
+
+    if (this.magnetometerSensor && typeof this.magnetometerSensor.stop === 'function') {
+      try {
+        this.magnetometerSensor.stop();
+      } catch (err) {
+        console.error('Failed to stop magnetometer:', err);
+      }
     }
   }
 }

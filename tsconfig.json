@@ -13,19 +13,15 @@
     "types": [
       "node"
     ],
-    "moduleResolution": "bundler",
-    "isolatedModules": true,
-    "moduleDetection": "force",
-    "allowJs": true,
-    "jsx": "react-jsx",
-    "paths": {
-      "@/*": [
-        "./*"
-      ]
-    }
+    "moduleResolution": "node",
+    "isolatedModules": true
   },
   "files": [
-    "./index.tsx"
+    "src/main.ts",
+    "src/polyfills.ts"
+  ],
+  "include": [
+    "src/**/*.d.ts"
   ],
   "angularCompilerOptions": {
     "disableTypeScriptVersionCheck": true
