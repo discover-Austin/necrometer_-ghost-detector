@@ -3,9 +3,16 @@
   "version": "1.0.0",
   "description": "A sophisticated paranormal activity scanner.",
   "scripts": {
+    "dev": "npx -p @angular/cli@^20 ng serve",
     "build": "npx -p @angular/cli@^20 ng build",
+    "build:prod": "npx -p @angular/cli@^20 ng build --configuration production",
     "sync:android": "npx cap sync android",
-    "open:android": "npx cap open android"
+    "open:android": "npx cap open android",
+    "sync:ios": "npx cap sync ios",
+    "open:ios": "npx cap open ios",
+    "cap:sync": "npx cap sync",
+    "lint": "npx -p @angular/cli@^20 ng lint",
+    "test": "echo \"Tests coming soon\" && exit 0"
   },
   "dependencies": {
     "@angular/build": "^20.3.0",
@@ -20,7 +27,11 @@
     "@capacitor/app": "^7.0.0",
     "@capacitor/core": "^7.4.3",
     "@capacitor/filesystem": "^7.0.0",
+    "@capacitor/geolocation": "^7.0.0",
+    "@capacitor/haptics": "^7.0.0",
     "@capacitor/ios": "^7.4.3",
+    "@capacitor/network": "^7.0.0",
+    "@capacitor/share": "^7.0.0",
     "@capacitor/splash-screen": "^7.0.0",
     "@google/genai": "^1.22.0",
     "capacitor-voice-recorder": "^6.1.0-2",
@@ -30,6 +41,11 @@
   "devDependencies": {
     "@angular-devkit/build-angular": "^20.3.6",
     "@capacitor/cli": "^7.4.3",
+    "@typescript-eslint/eslint-plugin": "^8.0.0",
+    "@typescript-eslint/parser": "^8.0.0",
+    "eslint": "^9.0.0",
+    "eslint-config-prettier": "^9.0.0",
+    "prettier": "^3.0.0",
     "typescript": "~5.8.0"
   }
 }

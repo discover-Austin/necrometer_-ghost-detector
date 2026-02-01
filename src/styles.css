@@ -11,7 +11,8 @@ body,
 app-root {
   background-color: transparent !important;
   font-family: 'Inter', sans-serif;
-  overflow: hidden; /* Prevent scrolling on main body */
+  overflow: hidden;
+  /* Prevent scrolling on main body */
 }
 
 /* Custom Utilities */
@@ -21,25 +22,64 @@ app-root {
   }
 
   .neon-text {
-    @apply text-spectral-300 drop-shadow-[0_0_5px_rgba(103,232,249,0.5)];
+    @apply text-spectral-300 drop-shadow-[0_0_5px_rgba(103, 232, 249, 0.5)];
   }
 
   .neon-border {
-    @apply border border-spectral-400/50 box-shadow-[0_0_10px_rgba(34,211,238,0.2)];
+    @apply border border-spectral-400/50 box-shadow-[0_0_10px_rgba(34, 211, 238, 0.2)];
   }
 }
 
 /* Base Styles */
 :root {
-  --color-primary-300: #67e8f9; 
-  --color-primary-400: #22d3ee; 
-  --color-primary-500: #06b6d4; 
-  --color-primary-600: #0891b2; 
+  /* Spectral Theme (Blue/Cyan) - HEAD version */
+  --color-primary-300: #67e8f9;
+  --color-primary-400: #22d3ee;
+  --color-primary-500: #06b6d4;
+  --color-primary-600: #0891b2;
   --color-primary-700: #0e7490;
+
+  /* Shadow Glow from Remote, adapted to spectral */
+  --shadow-glow: 0 0 20px rgba(6, 182, 212, 0.5);
+  /* using spectral-500 color from HEAD */
+
+  /* Additional variables from Remote */
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+
+  --border-radius-sm: 0.25rem;
+  --border-radius-md: 0.5rem;
+  --border-radius-lg: 1rem;
+
+  --transition-fast: 150ms ease-in-out;
+  --transition-normal: 300ms ease-in-out;
+  --transition-slow: 500ms ease-in-out;
+
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
 }
 
 .pro-theme {
-    /* Override for Pro theme if needed, or handle via specific classes */
+  /* Pro theme - Amber/Gold palette from Remote */
+  --color-primary-300: #fcd34d;
+  /* amber-300 */
+  --color-primary-400: #fbbf24;
+  /* amber-400 */
+  --color-primary-500: #f59e0b;
+  /* amber-500 */
+  --color-primary-600: #d97706;
+  /* amber-600 */
+  --color-primary-700: #b45309;
+  /* amber-700 */
+  --color-primary-800: #92400e;
+  /* amber-800 */
+  --color-primary-900: #78350f;
+  /* amber-900 */
+  --shadow-glow: 0 0 20px rgba(245, 158, 11, 0.5);
 }
 
 /* View transition animation */
@@ -48,6 +88,7 @@ app-root {
     opacity: 0;
     transform: translateY(10px) scale(0.98);
   }
+
   to {
     opacity: 1;
     transform: translateY(0) scale(1);
@@ -58,19 +99,118 @@ app-root {
   animation: view-fade-in 0.3s cubic-bezier(0.25, 0.46, 0.45, 0.94) forwards;
 }
 
-/* CRT Scanline Effect Overlay */
+/* CRT Scanline Effect Overlay (HEAD) */
 .scanlines {
-    background: linear-gradient(
-        to bottom,
-        rgba(255,255,255,0),
-        rgba(255,255,255,0) 50%,
-        rgba(0,0,0,0.2) 50%,
-        rgba(0,0,0,0.2)
-    );
-    background-size: 100% 4px;
-    position: absolute;
-    pointer-events: none;
-    z-index: 50;
-    opacity: 0.15;
-    inset: 0;
+  background: linear-gradient(to bottom,
+      rgba(255, 255, 255, 0),
+      rgba(255, 255, 255, 0) 50%,
+      rgba(0, 0, 0, 0.2) 50%,
+      rgba(0, 0, 0, 0.2));
+  background-size: 100% 4px;
+  position: absolute;
+  pointer-events: none;
+  z-index: 50;
+  opacity: 0.15;
+  inset: 0;
+}
+
+/* Pulse animation (Remote) */
+@keyframes pulse-glow {
+
+  0%,
+  100% {
+    opacity: 1;
+    box-shadow: var(--shadow-glow);
+  }
+
+  50% {
+    opacity: 0.7;
+    box-shadow: 0 0 30px var(--color-primary-500);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s ease-in-out infinite;
+}
+
+/* Fade in animation (Remote) */
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+.fade-in {
+  animation: fade-in 0.3s ease-in;
+}
+
+/* Slide up animation (Remote) */
+@keyframes slide-up {
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.slide-up {
+  animation: slide-up 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+}
+
+/* Utility classes (Remote) */
+.text-glow {
+  text-shadow: 0 0 10px currentColor;
+}
+
+.border-glow {
+  box-shadow: var(--shadow-glow);
+}
+
+/* Scrollbar styling (Remote) */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius-sm);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-primary-600);
+  border-radius: var(--border-radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary-500);
+}
+
+/* Focus visible (Remote) */
+*:focus-visible {
+  outline: 2px solid var(--color-primary-500);
+  outline-offset: 2px;
+}
+
+/* Spinner (Remote) */
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.spinner {
+  animation: spin 1s linear infinite;
 }

@@ -1,14 +1,18 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { GoogleGenAI, Type } from "@google/genai";
 import { EntityProfile, TemporalEcho, EVPAnalysis, DetectedEntity, CrossReferenceResult, EmotionalResonanceResult, ContainmentRitual, SceneAnalysisResult, SceneObject } from '../types';
+import { LoggerService } from './logger.service';
+import { EnvironmentService } from './environment.service';
 
 // A default fallback glyph in case image generation fails
-const FALLBACK_GLYPH_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAIrSURBVHhe7ZtNattAEID7/9+dFbSIIiJaNs06h5L2Wk2zJ5NCS80rFeLz4eG/4K+gKwhKBISKgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQITw3wL8/vmx0+l0vV7/8Xg8Ho/HZDI5OTkRgZfL5XA4lMvl4+PjTqfT6XQ+n//1eDyZTAY4f2S5XF6v1/P5/Gaz+fPz89ls9vf3d7/f/08G2Gw2nU7n8/kymczn87e3t3e7XZ/P93q9brdbn8/3er0+n++3f/p/Axyfz/d6vW63W5/P93q9brfL5XKpVCoVCoXC4fD1+z/9ZwAul8vlcvl8vslk8ng8zWYz4P9I0+k0mUwul8vlcnk8Hm82m1KpFAqFw+Hw+vo6kP+Pfr+fTqdzOBwOh8PpdDgcDpVKhUKhUqlUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUqlUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKh8N8T/sFj4iwy+vRp2oAAAAASUVORK5CYII=';
+const FALLBACK_GLYPH_B64 = 'iVBORw0KGgoAAAANSUhEUgAAAEAAAABACAYAAACqaXHeAAAAAXNSR0IArs4c6QAAAARnQU1BAACxjwv8YQUAAAAJcEhZcwAADsMAAA7DAcdvqGQAAAIrSURBVHhe7ZtNattAEID7/9+dFbSIIiJaNs06h5L2Wk2zJ5NCS80rFeLz4eG/4K+gKwhKBISKgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQISIgBARICISECEiQEQkIEJEgIhIQITw3wL8/vmx0+l0vV7/8Xg8Ho/HZDI5OTkRgZfL5XA4lMvl4+PjTqfT6XQ+n//1eDyZTAY4f2S5XF6v1/P5/Gaz+fPz89ls9vf3d7/f/08G2Gw2nU7n8/kymczn87e3t3e7XZ/P93q9brdbn8/3er0+n++3f/p/Axyfz/d6vW63W5/P93q9brdbn8/3er0+n++3f/p/Axyfz/d6vW63W5/P93q9brdb5XKpVCoVCoXC4fD1+z/9ZwAul8vlcvl8vslk8ng8zWYz4P9I0+k0mUwul8vlcnk8Hm82m1KpFAqFw+Hw+vo6kP+Pfr+fTqdzOBwOh8PpdDgcDpVKhUKhUqlUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUqlUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKhUKh8N8T/sFj4iwy+vRp2oAAAAASUVORK5CYII=';
 
 @Injectable({
   providedIn: 'root',
 })
 export class GeminiService {
+  private logger = inject(LoggerService);
+  private env = inject(EnvironmentService);
   private ai?: GoogleGenAI;
   private apiKey?: string;
   // Optional server-side proxy configuration
@@ -18,27 +22,60 @@ export class GeminiService {
   private proxyJwtExpiresAt: number | null = null;
 
   constructor() {
-    // Prefer server-side configuration. Do NOT automatically load an API key from browser storage.
-    // Server-side environment (Node) may provide an API key when running the server proxy.
+    this.logger.info('GeminiService initializing...');
+
+    // Prefer server-side configuration from process.env (Node/SSR)
+    // Then try window.__env (browser injection)
+    // Then try localStorage (dev/fallback)
+
     let key: string | undefined;
     try {
       if (typeof process !== 'undefined' && (process as any).env && (process as any).env.API_KEY) {
         key = (process as any).env.API_KEY;
+        this.logger.debug('API key loaded from process.env');
       }
-    } catch {}
+    } catch (e) {
+      this.logger.debug('Failed to read from process.env', e);
+    }
+
+    if (!key) {
+      try {
+        if (typeof window !== 'undefined') {
+          const w = window as any;
+          if (w && w.__env && w.__env.API_KEY) {
+            key = w.__env.API_KEY;
+            this.logger.debug('API key loaded from window.__env');
+          }
+          if (!key) {
+            const fromStorage = this.env.getStorageItem('apiKey');
+            if (fromStorage) {
+              key = fromStorage;
+              this.logger.debug('API key loaded from localStorage');
+            }
+          }
+        }
+      } catch (e) {
+        this.logger.debug('Failed to read API key from window/storage', e);
+      }
+    }
 
     if (key) {
       this.apiKey = key;
       this.ai = new GoogleGenAI({ apiKey: key });
+      this.logger.info('GeminiService configured with API key');
     } else {
-      // Not configured yet. Consumers must call setApiKey() (for dev) or configure proxy via setProxyConfig().
-      console.warn('GeminiService: API key not configured. Call setApiKey(apiKey) for development or setProxyConfig(baseUrl, token) to use the server proxy.');
+      // Not configured yet. Consumers must call setApiKey() or configure proxy.
+      this.logger.warn('GeminiService: API key not configured. Call setApiKey(apiKey) or setProxyConfig() before using the service.');
     }
   }
 
   /** Set API key at runtime (useful for web clients). This will instantiate the GoogleGenAI client. */
   setApiKey(apiKey: string, persist = false) {
-    if (!apiKey || typeof apiKey !== 'string') throw new Error('Invalid API key');
+    if (!apiKey || typeof apiKey !== 'string') {
+      this.logger.error('Invalid API key provided');
+      throw new Error('Invalid API key');
+    }
+
     // If running in a production-like environment (non-localhost), do not allow persistent client-side storage
     const isProdHost = typeof window !== 'undefined' && window.location && window.location.hostname && !/^(localhost|127\.0\.0\.1)$/.test(window.location.hostname);
     if (persist && isProdHost) {
@@ -51,8 +88,14 @@ export class GeminiService {
 
     // Do not persist by default. Persist only when explicitly requested and not in production.
     if (persist) {
-      try { localStorage.setItem('necrometer.apiKey', apiKey); } catch {}
+      const success = this.env.setStorageItem('apiKey', apiKey);
+      if (success) {
+        this.logger.info('API key persisted to storage');
+      } else {
+        this.logger.warn('Failed to persist API key to storage');
+      }
     }
+    this.logger.info('API key set successfully');
   }
 
   /** Configure a server-side proxy (base URL) and shared bearer token. When configured, some requests will be routed through the proxy. */
@@ -108,59 +151,77 @@ export class GeminiService {
   }
 
   async getEntityProfile(strength: 'weak' | 'moderate' | 'strong' | 'critical'): Promise<EntityProfile> {
-    // Use proxy endpoint if configured
-    if (this.proxyBaseUrl && this.proxyToken) {
-      const jwt = await this.ensureProxyJwt();
-      const resp = await fetch(`${this.proxyBaseUrl}/api/generate-entity-profile`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
-        body: JSON.stringify({ strength }),
-      });
-      if (!resp.ok) throw new Error(`Proxy error: ${resp.status} ${await resp.text()}`);
-      return await resp.json() as EntityProfile;
-    }
-    this.ensureConfigured();
-    const strengthDescription = this.getStrengthDescription(strength);
-    const profilePrompt = `Generate a short, spooky, and mysterious profile for a paranormal entity. The energy signature is ${strengthDescription}. The profile must include a plausible name, a type (e.g., Poltergeist, Shade, Revenant, Wraith, Banshee, Phantom, Lingering Spirit), a one-paragraph backstory, and an 'instability' rating (a number from 50 to 100). The entity is not yet 'contained'. Do not use markdown.`;
-    // Call the real API and propagate errors to callers (no mocks returned here)
-    const profileResponse = await this.ai!.models.generateContent({
-      model: 'gemini-2.5-flash',
-      contents: profilePrompt,
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: Type.OBJECT,
-          properties: {
-            name: { type: Type.STRING, description: 'The name of the entity.' },
-            type: { type: Type.STRING, description: 'The classification of the spirit.' },
-            backstory: { type: Type.STRING, description: 'A short, unsettling backstory.' },
-            instability: { type: Type.NUMBER, description: 'A rating from 50-100 of how unstable the entity is.'},
-            contained: { type: Type.BOOLEAN, description: 'Always false for new entities.'}
+    const timer = this.logger.startTimer('getEntityProfile');
+    this.logger.info(`Generating entity profile for ${strength} strength`);
+
+    try {
+      // Use proxy endpoint if configured
+      if (this.proxyBaseUrl && this.proxyToken) {
+        const jwt = await this.ensureProxyJwt();
+        const resp = await fetch(`${this.proxyBaseUrl}/api/generate-entity-profile`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${jwt}` },
+          body: JSON.stringify({ strength }),
+        });
+        if (!resp.ok) {
+          const error = `Proxy error: ${resp.status} ${await resp.text()}`;
+          this.logger.error('Proxy entity profile generation failed', error);
+          throw new Error(error);
+        }
+        const result = await resp.json() as EntityProfile;
+        timer();
+        return result;
+      }
+      this.ensureConfigured();
+      const strengthDescription = this.getStrengthDescription(strength);
+      const profilePrompt = `Generate a short, spooky, and mysterious profile for a paranormal entity. The energy signature is ${strengthDescription}. The profile must include a plausible name, a type (e.g., Poltergeist, Shade, Revenant, Wraith, Banshee, Phantom, Lingering Spirit), a one-paragraph backstory, and an 'instability' rating (a number from 50 to 100). The entity is not yet 'contained'. Do not use markdown.`;
+      // Call the real API and propagate errors to callers (no mocks returned here)
+      const profileResponse = await this.ai!.models.generateContent({
+        model: 'gemini-2.5-flash',
+        contents: profilePrompt,
+        config: {
+          responseMimeType: "application/json",
+          responseSchema: {
+            type: Type.OBJECT,
+            properties: {
+              name: { type: Type.STRING, description: 'The name of the entity.' },
+              type: { type: Type.STRING, description: 'The classification of the spirit.' },
+              backstory: { type: Type.STRING, description: 'A short, unsettling backstory.' },
+              instability: { type: Type.NUMBER, description: 'A rating from 50-100 of how unstable the entity is.' },
+              contained: { type: Type.BOOLEAN, description: 'Always false for new entities.' }
+            },
+            required: ['name', 'type', 'backstory', 'instability', 'contained'],
           },
-          required: ['name', 'type', 'backstory', 'instability', 'contained'],
+          temperature: 1.1,
+          topP: 0.95,
         },
-        temperature: 1.1,
-        topP: 0.95,
-      },
-    });
+      });
 
-    const jsonText = profileResponse.text.trim();
-    const profileData = JSON.parse(jsonText) as Omit<EntityProfile, 'glyphB64'>;
+      const jsonText = profileResponse.text.trim();
+      const profileData = JSON.parse(jsonText) as Omit<EntityProfile, 'glyphB64'>;
 
-    // Now generate the glyph image based on the profile
-    const glyphPrompt = `Create a single, minimalist, arcane, mystical sigil or glyph that represents a paranormal entity. The entity is a "${profileData.type}" known as "${profileData.name}". The glyph should be a stark white design on a pure black background. It should look ancient and mysterious. It should not be a picture of the entity, but a symbolic representation.`;
+      // Now generate the glyph image based on the profile
+      const glyphPrompt = `Create a single, minimalist, arcane, mystical sigil or glyph that represents a paranormal entity. The entity is a "${profileData.type}" known as "${profileData.name}". The glyph should be a stark white design on a pure black background. It should look ancient and mysterious. It should not be a picture of the entity, but a symbolic representation.`;
 
-    const imageResponse = await this.ai!.models.generateImages({
-      model: 'imagen-3.0-generate-002',
-      prompt: glyphPrompt,
-      config: {
-        numberOfImages: 1,
-        outputMimeType: 'image/png',
-        aspectRatio: '1:1',
-      },
-    });
-    const glyphB64 = imageResponse.generatedImages[0].image.imageBytes;
-    return { ...profileData, glyphB64 };
+      const imageResponse = await this.ai!.models.generateImages({
+        model: 'imagen-3.0-generate-002',
+        prompt: glyphPrompt,
+        config: {
+          numberOfImages: 1,
+          outputMimeType: 'image/png',
+          aspectRatio: '1:1',
+        },
+      });
+      const glyphB64 = imageResponse.generatedImages[0].image.imageBytes;
+      const result = { ...profileData, glyphB64 };
+      timer();
+      this.logger.info(`Entity profile generated: ${result.name} (${result.type})`);
+      return result;
+    } catch (error) {
+      this.logger.error('Failed to generate entity profile', error);
+      timer();
+      throw error;
+    }
   }
 
   async analyzeScene(imageDataB64: string): Promise<SceneAnalysisResult> {
@@ -224,7 +285,7 @@ export class GeminiService {
         }
       }
     });
-    
+
     return JSON.parse(response.text.trim()) as SceneAnalysisResult;
   }
 
@@ -233,20 +294,20 @@ export class GeminiService {
 
     this.ensureConfigured();
     const response = await this.ai!.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              transcription: { type: Type.STRING, description: 'The deciphered ghostly phrase.' },
-              confidence: { type: Type.NUMBER, description: 'The confidence score of the analysis.' },
-            },
-            required: ['transcription', 'confidence'],
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            transcription: { type: Type.STRING, description: 'The deciphered ghostly phrase.' },
+            confidence: { type: Type.NUMBER, description: 'The confidence score of the analysis.' },
           },
-          temperature: 1.2,
+          required: ['transcription', 'confidence'],
         },
+        temperature: 1.2,
+      },
     });
 
     return JSON.parse(response.text.trim()) as EVPAnalysis;
@@ -267,44 +328,44 @@ export class GeminiService {
 
     this.ensureConfigured();
     const response = await this.ai!.models.generateContent({
-       model: 'gemini-2.5-flash',
-       contents: prompt,
-       config: {
-         responseMimeType: "application/json",
-         responseSchema: {
-           type: Type.OBJECT,
-           properties: {
-             title: { type: Type.STRING, description: 'The title of the historical event.' },
-             era: { type: Type.STRING, description: 'The historical era of the event.' },
-             description: { type: Type.STRING, description: 'The one-paragraph description of the echo.' },
-           },
-           required: ['title', 'era', 'description'],
-         },
-         temperature: 1.1,
-       },
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            title: { type: Type.STRING, description: 'The title of the historical event.' },
+            era: { type: Type.STRING, description: 'The historical era of the event.' },
+            description: { type: Type.STRING, description: 'The one-paragraph description of the echo.' },
+          },
+          required: ['title', 'era', 'description'],
+        },
+        temperature: 1.1,
+      },
     });
 
     return JSON.parse(response.text.trim()) as TemporalEcho;
   }
-  
+
   async crossReferenceEntity(entity: DetectedEntity): Promise<CrossReferenceResult> {
     const prompt = `Cross-reference this paranormal entity against a global spectral database: Name: "${entity.name}", Type: "${entity.type}". Is there a known record? If so, provide a short, one-paragraph summary of its history or lore. If not, state that it's an undocumented anomaly. Respond in JSON format.`;
 
     this.ensureConfigured();
     const response = await this.ai!.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              match: { type: Type.BOOLEAN },
-              details: { type: Type.STRING },
-            },
-            required: ['match', 'details'],
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            match: { type: Type.BOOLEAN },
+            details: { type: Type.STRING },
           },
+          required: ['match', 'details'],
         },
+      },
     });
     return JSON.parse(response.text.trim()) as CrossReferenceResult;
   }
@@ -312,21 +373,21 @@ export class GeminiService {
   async getEmotionalResonance(entity: DetectedEntity): Promise<EmotionalResonanceResult> {
     const prompt = `Analyze the backstory of the entity known as "${entity.name}" to determine its dominant emotional resonance. Backstory: "${entity.backstory}". List the top 3 emotions (e.g., Sorrow, Rage, Confusion) and a one-sentence summary of why. Respond in JSON format.`;
 
-     this.ensureConfigured();
-     const response = await this.ai!.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              emotions: { type: Type.ARRAY, items: { type: Type.STRING } },
-              summary: { type: Type.STRING },
-            },
-            required: ['emotions', 'summary'],
+    this.ensureConfigured();
+    const response = await this.ai!.models.generateContent({
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            emotions: { type: Type.ARRAY, items: { type: Type.STRING } },
+            summary: { type: Type.STRING },
           },
+          required: ['emotions', 'summary'],
         },
+      },
     });
     return JSON.parse(response.text.trim()) as EmotionalResonanceResult;
   }
@@ -336,20 +397,20 @@ export class GeminiService {
 
     this.ensureConfigured();
     const response = await this.ai!.models.generateContent({
-        model: 'gemini-2.5-flash',
-        contents: prompt,
-        config: {
-          responseMimeType: "application/json",
-          responseSchema: {
-            type: Type.OBJECT,
-            properties: {
-              steps: { type: Type.ARRAY, items: { type: Type.STRING } },
-              outcome: { type: Type.STRING },
-            },
-            required: ['steps', 'outcome'],
+      model: 'gemini-2.5-flash',
+      contents: prompt,
+      config: {
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: Type.OBJECT,
+          properties: {
+            steps: { type: Type.ARRAY, items: { type: Type.STRING } },
+            outcome: { type: Type.STRING },
           },
-          temperature: 0.9,
+          required: ['steps', 'outcome'],
         },
+        temperature: 0.9,
+      },
     });
     return JSON.parse(response.text.trim()) as ContainmentRitual;
   }

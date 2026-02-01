@@ -1,7 +1,0 @@
-<?xml version='1.0' encoding='utf-8'?>
-<resources>
-    <string name="app_name">Ghosted-Necrometer</string>
-    <string name="title_activity_main">Ghosted-Necrometer</string>
-    <string name="package_name">com.ghosted_necrometer.app</string>
-    <string name="custom_url_scheme">com.ghosted_necrometer.app</string>
-</resources>
