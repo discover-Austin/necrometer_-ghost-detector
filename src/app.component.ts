@@ -1,10 +1,7 @@
 import { Component, ChangeDetectionStrategy, signal, inject, AfterViewInit, OnDestroy, computed, effect, ViewChild, ElementRef, Renderer2 } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { ScannerComponent } from './components/scanner/scanner.component';
 import { LogbookComponent } from './components/logbook/logbook.component';
 import { VisionComponent } from './components/vision/vision.component';
-import { EvpComponent } from './components/evp/evp.component';
-import { EchoesComponent } from './components/echoes/echoes.component';
 import { UpgradeComponent } from './components/upgrade/upgrade.component';
 import { ToastComponent } from './components/toast/toast.component';
 import { GeminiService } from './services/gemini.service';
@@ -19,7 +16,7 @@ import { SensorService } from './services/sensor.service';
 import { PluginListenerHandle } from '@capacitor/core';
 import { App } from '@capacitor/app';
 
-type View = 'scanner' | 'vision' | 'logbook' | 'evp' | 'echoes' | 'store';
+type View = 'vision' | 'logbook' | 'store';
 
 @Component({
   selector: 'app-root',
@@ -27,11 +24,8 @@ type View = 'scanner' | 'vision' | 'logbook' | 'evp' | 'echoes' | 'store';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     CommonModule,
-    ScannerComponent,
     LogbookComponent,
     VisionComponent,
-    EvpComponent,
-    EchoesComponent,
     UpgradeComponent,
     ToastComponent,
   ],
@@ -41,7 +35,7 @@ type View = 'scanner' | 'vision' | 'logbook' | 'evp' | 'echoes' | 'store';
 })
 export class AppComponent implements AfterViewInit, OnDestroy {
   private persistenceService = inject(PersistenceService);
-  activeView = signal<View>('scanner');
+  activeView = signal<View>('vision');
   activeViewIndex = signal(0);
   detections = signal<DetectedEntity[]>(this.persistenceService.loadDetections());
   isLoading = signal(false);
