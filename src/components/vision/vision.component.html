@@ -41,13 +41,21 @@
 
   <!-- Minimal HUD -->
   <div class="absolute inset-0 z-30 pointer-events-none p-4 flex flex-col justify-between">
-    <!-- Top corner indicators -->
+    <!-- Top corner indicators (pulse on acknowledgment) -->
     <div class="flex justify-between items-start">
-      <div class="text-xs text-spectral-500/40 font-mono">
+      <div class="text-xs text-spectral-500/40 font-mono relative">
         <span class="tracking-wider">MONITORING</span>
+        @if (showAcknowledgment()) {
+          <div class="absolute -top-2 -left-2 w-2 h-2 bg-spectral-400 rounded-full animate-ping"></div>
+          <div class="absolute -top-2 -left-2 w-2 h-2 bg-spectral-400 rounded-full"></div>
+        }
       </div>
-      <div class="text-xs text-spectral-500/40 font-mono text-right">
+      <div class="text-xs text-spectral-500/40 font-mono text-right relative">
         <span>{{ deviceState.emfReading() | number:'1.0-0' }} µT</span>
+        @if (showAcknowledgment()) {
+          <div class="absolute -top-2 -right-2 w-2 h-2 bg-spectral-400 rounded-full animate-ping"></div>
+          <div class="absolute -top-2 -right-2 w-2 h-2 bg-spectral-400 rounded-full"></div>
+        }
       </div>
     </div>
 

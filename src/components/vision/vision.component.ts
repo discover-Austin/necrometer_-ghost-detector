@@ -39,6 +39,24 @@ export class VisionComponent implements OnInit, OnDestroy {
     effect(() => {
       const anomaly = this.anomalyService.currentAnomaly();
       this.currentAnomaly.set(anomaly);
+      
+      // If an anomaly is showing, schedule acknowledgment after it disappears
+      if (anomaly) {
+        const anomalyDuration = anomaly.duration;
+        const acknowledgmentDelay = 500 + Math.random() * 700; // 500-1200ms after anomaly disappears
+        
+        setTimeout(() => {
+          // Show acknowledgment
+          this.acknowledgmentText.set(anomaly.description);
+          this.showAcknowledgment.set(true);
+          
+          // Hide acknowledgment after 3 seconds
+          setTimeout(() => {
+            this.showAcknowledgment.set(false);
+            this.acknowledgmentText.set('');
+          }, 3000);
+        }, anomalyDuration + acknowledgmentDelay);
+      }
     });
   }
 
