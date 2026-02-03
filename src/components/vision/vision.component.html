@@ -23,6 +23,7 @@
     <div class="absolute z-20 pointer-events-none anomaly-container"
       [style.left.%]="anomaly.position.x"
       [style.top.%]="anomaly.position.y"
+      [style.opacity]="anomaly.intensity"
       [class.anomaly-fade-in]="true">
       
       @switch (anomaly.type) {
@@ -44,31 +45,14 @@
 
   <!-- Minimal HUD -->
   <div class="absolute inset-0 z-30 pointer-events-none p-4 flex flex-col justify-between">
-    <!-- Top corner indicators (pulse on acknowledgment) -->
+    <!-- Top corner indicators -->
     <div class="flex justify-between items-start">
-      <div class="text-xs text-spectral-500/40 font-mono relative">
+      <div class="text-xs text-spectral-500/40 font-mono">
         <span class="tracking-wider">MONITORING</span>
-        @if (showAcknowledgment()) {
-          <div class="absolute -top-2 -left-2 w-2 h-2 bg-spectral-400 rounded-full animate-ping"></div>
-          <div class="absolute -top-2 -left-2 w-2 h-2 bg-spectral-400 rounded-full"></div>
-        }
       </div>
-      <div class="text-xs text-spectral-500/40 font-mono text-right relative">
+      <div class="text-xs text-spectral-500/40 font-mono text-right">
         <span>{{ deviceState.emfReading() | number:'1.0-0' }} µT</span>
-        @if (showAcknowledgment()) {
-          <div class="absolute -top-2 -right-2 w-2 h-2 bg-spectral-400 rounded-full animate-ping"></div>
-          <div class="absolute -top-2 -right-2 w-2 h-2 bg-spectral-400 rounded-full"></div>
-        }
       </div>
-    </div>
-
-    <!-- Bottom status bar -->
-    <div class="flex justify-center items-end">
-      @if (showAcknowledgment()) {
-        <div class="text-xs text-spectral-400 font-mono bg-obsidian-950/80 px-3 py-1.5 border border-spectral-500/30 acknowledgment-pulse">
-          {{ acknowledgmentText() }}
-        </div>
-      }
     </div>
   </div>
 
