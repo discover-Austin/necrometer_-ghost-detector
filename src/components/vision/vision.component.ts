@@ -3,7 +3,9 @@ import { CommonModule } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
 import { CameraPreview } from '@capacitor-community/camera-preview';
 import { App } from '@capacitor/app';
+import { PluginListenerHandle } from '@capacitor/core';
 import { AnomalyDetectionService, AnomalyEvent } from '../../services/anomaly-detection.service';
+import { LoggerService } from '../../services/logger.service';
 
 @Component({
   selector: 'app-vision',
@@ -15,11 +17,12 @@ import { AnomalyDetectionService, AnomalyEvent } from '../../services/anomaly-de
 export class VisionComponent implements OnInit, OnDestroy {
   deviceState = inject(DeviceStateService);
   private anomalyService = inject(AnomalyDetectionService);
+  private logger = inject(LoggerService);
 
   isCameraActive = false;
   cameraPermissionError = signal<string | null>(null);
   cameraStatusMessage = signal<string | null>(null);
-  private appStateListener: any | null = null;
+  private appStateListener: PromiseLike<{ remove(): void }> | { remove(): void } | null = null;
 
   // Ambient instability
   brightnessFluctuation = signal<number>(0);
@@ -40,23 +43,36 @@ export class VisionComponent implements OnInit, OnDestroy {
     });
   }
 
-  ngOnInit() {
+  async ngOnInit() {
     this.startCamera();
     this.startAmbientInstability();
-    this.anomalyService.start(); // Start camera analysis and anomaly detection
-    this.appStateListener = App.addListener('appStateChange', ({ isActive }) => {
-      if (isActive && this.cameraPermissionError() && !this.isCameraActive) {
-        this.startCamera();
-      }
-    });
+    this.anomalyService.start();
+    
+    // Setup app state listener
+    try {
+      this.appStateListener = await App.addListener('appStateChange', ({ isActive }) => {
+        if (isActive && this.cameraPermissionError() && !this.isCameraActive) {
+          this.startCamera();
+        }
+      });
+    } catch (error) {
+      this.logger.warn('Failed to add app state listener', error);
+    }
   }
 
   ngOnDestroy() {
     this.stopCamera();
     this.stopAmbientInstability();
     this.anomalyService.stop();
+    
+    // Clean up app state listener
     if (this.appStateListener) {
-      this.appStateListener.remove();
+      if ('remove' in this.appStateListener) {
+        this.appStateListener.remove();
+      } else {
+        // It's a Promise, wait for it then remove
+        this.appStateListener.then(listener => listener.remove());
+      }
     }
   }
 
@@ -86,7 +102,7 @@ export class VisionComponent implements OnInit, OnDestroy {
     try {
       await CameraPreview.stop();
     } catch (e) {
-      console.warn("Could not stop camera preview", e);
+      this.logger.warn("Could not stop camera preview", e);
     }
   }
 

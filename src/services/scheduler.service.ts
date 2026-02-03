@@ -2,8 +2,11 @@ import { Injectable, signal, effect, inject, computed } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Schedule } from '../types';
 import { PersistenceService } from './persistence.service';
+import { LoggerService } from './logger.service';
+
 // rrule is an optional dependency; load dynamically to avoid build-time failure when absent
-let rrulestr: any | undefined = undefined;
+type RRuleStr = (str: string) => { after: (date: Date, inc: boolean) => Date | null };
+let rrulestr: RRuleStr | undefined = undefined;
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
   const rrulePkg = require('rrule');
@@ -16,12 +19,13 @@ try {
 const SCHEDULES_STORAGE_KEY = 'necrometer_schedules_v1';
 
 interface InternalSchedule extends Schedule {
-  timerId?: any;
+  timerId?: ReturnType<typeof setTimeout>;
 }
 
 @Injectable({ providedIn: 'root' })
 export class SchedulerService {
   private persistence = inject(PersistenceService);
+  private logger = inject(LoggerService);
 
   private schedules = signal<InternalSchedule[]>(this.loadSchedules());
   private jobSubject = new BehaviorSubject<{ schedule: Schedule; firedAt: Date } | null>(null);
@@ -62,7 +66,7 @@ export class SchedulerService {
       const raw = JSON.stringify(this.schedules());
       localStorage.setItem(SCHEDULES_STORAGE_KEY, raw);
     } catch (e) {
-      console.error('Failed to save schedules', e);
+      this.logger.error('Failed to save schedules', e);
     }
   }
 
@@ -73,7 +77,7 @@ export class SchedulerService {
       const parsed = JSON.parse(raw) as InternalSchedule[];
       return parsed.map(s => ({ ...s }));
     } catch (e) {
-      console.error('Failed to load schedules', e);
+      this.logger.error('Failed to load schedules', e);
       localStorage.removeItem(SCHEDULES_STORAGE_KEY);
       return [];
     }
@@ -112,7 +116,7 @@ export class SchedulerService {
         const next = rule.after(after, false);
         return next ?? null;
       } catch (e) {
-        console.warn('Invalid rrule for schedule', s.id, e);
+        this.logger.warn('Invalid rrule for schedule', s.id, e);
       }
     }
 

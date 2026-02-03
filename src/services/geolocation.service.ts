@@ -39,7 +39,7 @@ export class GeolocationService {
       this.currentLocation.set(location);
       this.logger.info('Current position obtained', location);
       return location;
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleError(error);
       return null;
     }
@@ -77,7 +77,7 @@ export class GeolocationService {
 
       this.isTracking.set(true);
       this.logger.info('Started geolocation tracking');
-    } catch (error: any) {
+    } catch (error: unknown) {
       this.handleError(error);
     }
   }
@@ -157,8 +157,8 @@ export class GeolocationService {
   /**
    * Handle geolocation errors
    */
-  private handleError(error: any): void {
-    const message = error?.message || String(error);
+  private handleError(error: unknown): void {
+    const message = error instanceof Error ? error.message : String(error);
 
     if (message.includes('permission')) {
       this.toast.error('Location permission denied. Please enable in settings.');

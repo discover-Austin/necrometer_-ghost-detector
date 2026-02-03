@@ -1,4 +1,5 @@
-import { Injectable, signal, effect } from '@angular/core';
+import { Injectable, signal, effect, inject } from '@angular/core';
+import { LoggerService } from './logger.service';
 
 const UPGRADE_STORAGE_KEY = 'necrometer_upgrades';
 
@@ -11,6 +12,8 @@ interface UpgradeState {
   providedIn: 'root',
 })
 export class UpgradeService {
+  private logger = inject(LoggerService);
+  
   // Start the user with a welcome bonus of credits
   credits = signal(15);
   isPro = signal(false);
@@ -63,7 +66,7 @@ export class UpgradeService {
       };
       localStorage.setItem(UPGRADE_STORAGE_KEY, JSON.stringify(state));
     } catch (error) {
-      console.error('Error saving upgrade state to localStorage', error);
+      this.logger.error('Error saving upgrade state to localStorage', error);
     }
   }
 
@@ -76,7 +79,7 @@ export class UpgradeService {
         this.isPro.set(state.isPro ?? false);
       }
     } catch (error) {
-      console.error('Error loading upgrade state from localStorage', error);
+      this.logger.error('Error loading upgrade state from localStorage', error);
     }
   }
 }

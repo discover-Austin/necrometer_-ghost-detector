@@ -8,7 +8,7 @@ interface QueuedRequest {
   id: string;
   url: string;
   method: string;
-  body?: any;
+  body?: unknown;
   headers?: Record<string, string>;
   timestamp: number;
   retries: number;
@@ -46,7 +46,7 @@ export class OfflineQueueService {
   /**
    * Add request to queue
    */
-  enqueue(url: string, method: string, body?: any, headers?: Record<string, string>): void {
+  enqueue(url: string, method: string, body?: unknown, headers?: Record<string, string>): void {
     const request: QueuedRequest = {
       id: `${Date.now()}-${Math.random()}`,
       url,

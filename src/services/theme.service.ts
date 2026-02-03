@@ -1,4 +1,4 @@
-import { Injectable, inject, signal, effect } from '@angular/core';
+import { Injectable, inject, signal, effect, OnDestroy } from '@angular/core';
 import { EnvironmentService } from './environment.service';
 import { LoggerService } from './logger.service';
 
@@ -10,12 +10,14 @@ export type ThemeMode = 'light' | 'dark' | 'auto';
 @Injectable({
   providedIn: 'root'
 })
-export class ThemeService {
+export class ThemeService implements OnDestroy {
   private env = inject(EnvironmentService);
   private logger = inject(LoggerService);
 
   mode = signal<ThemeMode>('auto');
   isDark = signal(false);
+  private mediaQueryListener?: (e: MediaQueryListEvent) => void;
+  private mediaQuery?: MediaQueryList;
 
   constructor() {
     this.loadPreference();
@@ -62,17 +64,31 @@ export class ThemeService {
   private setupAutoDetection(): void {
     if (typeof window === 'undefined') return;
 
-    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    try {
+      this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    // Initial check
-    this.updateIsDark();
+      // Initial check
+      this.updateIsDark();
 
-    // Listen for changes
-    mediaQuery.addEventListener('change', () => {
-      if (this.mode() === 'auto') {
-        this.updateIsDark();
-      }
-    });
+      // Listen for changes
+      this.mediaQueryListener = () => {
+        if (this.mode() === 'auto') {
+          this.updateIsDark();
+        }
+      };
+      
+      this.mediaQuery.addEventListener('change', this.mediaQueryListener);
+    } catch (error) {
+      this.logger.warn('Failed to setup theme auto-detection', error);
+      // Fallback to manual theme selection
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Clean up media query listener
+    if (this.mediaQuery && this.mediaQueryListener) {
+      this.mediaQuery.removeEventListener('change', this.mediaQueryListener);
+    }
   }
 
   /**

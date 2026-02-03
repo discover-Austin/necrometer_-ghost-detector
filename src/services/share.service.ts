@@ -73,9 +73,10 @@ export class ShareService {
       await Share.share(options);
       this.logger.info('Content shared successfully');
       this.toast.success('Shared successfully');
-    } catch (error: any) {
+    } catch (error: unknown) {
       // User cancelled share
-      if (error?.message?.includes('cancel')) {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      if (errorMessage.includes('cancel')) {
         this.logger.debug('Share cancelled by user');
         return;
       }

@@ -55,7 +55,7 @@ export class AnomalyDetectionService {
   private readonly INTENSITY_MIN = 0.18;
   private readonly INTENSITY_MAX = 0.42;
   
-  private anomalyCheckInterval: any = null;
+  private anomalyCheckInterval: ReturnType<typeof setInterval> | null = null;
   private lastAnomalyPosition: { x: number; y: number } | null = null;
 
   constructor() {

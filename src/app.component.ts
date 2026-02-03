@@ -8,6 +8,8 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { AudioService } from './services/audio.service';
 import { SensorService } from './services/sensor.service';
 import { AnomalyDetectionService } from './services/anomaly-detection.service';
+import { LoggerService } from './services/logger.service';
+import { ToastService } from './services/toast.service';
 
 type View = 'vision' | 'logbook';
 
@@ -25,11 +27,15 @@ type View = 'vision' | 'logbook';
 export class AppComponent implements AfterViewInit, OnDestroy {
   activeView = signal<View>('vision');
   activeViewIndex = signal(0);
+  isLoading = signal(false);
+  error = signal<string | null>(null);
 
   deviceState = inject(DeviceStateService);
   audioService = inject(AudioService);
   private sensorService = inject(SensorService);
   anomalyService = inject(AnomalyDetectionService);
+  private logger = inject(LoggerService);
+  private toast = inject(ToastService);
   private isAudioInitialized = false;
 
   @ViewChild('mainContent') mainContentRef!: ElementRef<HTMLElement>;
@@ -65,17 +71,27 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.sensorService.stop();
     this.anomalyService.stop();
   }
+  
   private async initializeAudio() {
     if (!this.isAudioInitialized) {
-      await this.audioService.init();
-      this.isAudioInitialized = true;
+      try {
+        await this.audioService.init();
+        this.isAudioInitialized = true;
+      } catch (error) {
+        this.logger.error('Failed to initialize audio', error);
+        this.toast.warning('Audio features unavailable');
+        // Mark as initialized anyway to prevent repeated attempts
+        this.isAudioInitialized = true;
+      }
     }
   }
 
   hasNewDetections = signal(false);
 
   viewLogbook() {
-    this.initializeAudio();
+    this.initializeAudio().catch(error => {
+      this.logger.error('Error during audio initialization in viewLogbook', error);
+    });
     this.audioService.playUISound();
     this.activeView.set('logbook');
     this.activeViewIndex.set(1);
@@ -83,9 +99,38 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   viewScanner() {
-    this.initializeAudio();
+    this.initializeAudio().catch(error => {
+      this.logger.error('Error during audio initialization in viewScanner', error);
+    });
     this.audioService.playUISound();
     this.activeView.set('vision');
     this.activeViewIndex.set(0);
+  }
+
+  onNavigationKeydown(event: KeyboardEvent, view: View) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (view === 'vision') {
+        this.viewScanner();
+      } else if (view === 'logbook') {
+        this.viewLogbook();
+      }
+    }
+    // Arrow key navigation
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      if (this.activeView() === 'vision') {
+        this.viewLogbook();
+      } else {
+        this.viewScanner();
+      }
+    }
+  }
+
+  skipToMain() {
+    if (this.mainContentRef) {
+      this.mainContentRef.nativeElement.focus();
+      this.mainContentRef.nativeElement.scrollIntoView();
+    }
   }
 }

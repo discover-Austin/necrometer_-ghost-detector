@@ -10,6 +10,8 @@ import { AnomalyEvent } from '../../services/anomaly-detection.service';
 })
 export class LogbookComponent {
   @Input() anomalyEvents: AnomalyEvent[] = [];
+  @Input() isLoading = false;
+  @Input() error: string | null = null;
 
   selectedEvent = signal<AnomalyEvent | null>(null);
 
@@ -18,6 +20,13 @@ export class LogbookComponent {
       this.selectedEvent.set(null); // Toggle off
     } else {
       this.selectedEvent.set(event);
+    }
+  }
+
+  onEventKeydown(event: KeyboardEvent, anomalyEvent: AnomalyEvent) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.selectEvent(anomalyEvent);
     }
   }
 

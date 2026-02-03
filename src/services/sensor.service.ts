@@ -1,4 +1,15 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { LoggerService } from './logger.service';
+
+// Magnetometer type definition for Generic Sensor API
+interface Magnetometer extends EventTarget {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  start(): void;
+  stop(): void;
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject): void;
+}
 
 interface SensorHistory {
   current: number;
@@ -10,6 +21,8 @@ interface SensorHistory {
   providedIn: 'root',
 })
 export class SensorService {
+  private logger = inject(LoggerService);
+  
   orientation = signal<{ alpha: number; beta: number; gamma: number } | null>(null);
   motion = signal<{ x: number; y: number; z: number } | null>(null);
 
@@ -82,12 +95,12 @@ export class SensorService {
   });
 
   private hasPermissions = signal(false);
-  private updateInterval: any = null;
+  private updateInterval: ReturnType<typeof setInterval> | null = null;
 
   // Keep a reference to the magnetometer sensor so that we can
   // stop it later.  The type is loose because `Magnetometer` isn't
   // defined on the Window interface in TypeScript by default.
-  private magnetometerSensor: any;
+  private magnetometerSensor: Magnetometer | null = null;
 
   // Using arrow functions to preserve `this` context in event handlers
   private handleOrientation = (event: DeviceOrientationEvent) => {
@@ -119,7 +132,7 @@ export class SensorService {
     }
   };
 
-  private updateHistory(historySignal: any, value: number) {
+  private updateHistory(historySignal: ReturnType<typeof signal<SensorHistory>>, value: number) {
     historySignal.update((history: SensorHistory) => {
       const newShortTerm = [...history.shortTerm, value];
       const newLongTerm = [...history.longTerm, value];
@@ -144,7 +157,7 @@ export class SensorService {
 
   async start(): Promise<void> {
     if (typeof window === 'undefined' || typeof DeviceOrientationEvent === 'undefined') {
-      console.warn('Device Orientation API not supported.');
+      this.logger.warn('Device Orientation API not supported.');
       return;
     }
 
@@ -155,11 +168,11 @@ export class SensorService {
         if (permissionState === 'granted') {
           this.hasPermissions.set(true);
         } else {
-          console.warn('Permission for Device Orientation not granted.');
+          this.logger.warn('Permission for Device Orientation not granted.');
           return;
         }
       } catch (error) {
-        console.error('Error requesting device orientation permission:', error);
+        this.logger.error('Error requesting device orientation permission:', error);
         return;
       }
     } else {
@@ -188,15 +201,16 @@ export class SensorService {
           // Track magnetometer history
           this.updateHistory(this.magnetometerHistory, magnitude);
         });
-        this.magnetometerSensor.addEventListener('error', (event: any) => {
-          console.error('Magnetometer error:', event.error);
+        this.magnetometerSensor.addEventListener('error', (event: Event) => {
+          const errorEvent = event as { error?: unknown };
+          this.logger.error('Magnetometer error:', errorEvent.error);
         });
         this.magnetometerSensor.start();
       } catch (err) {
-        console.error('Failed to start magnetometer:', err);
+        this.logger.error('Failed to start magnetometer:', err);
       }
     } else {
-      console.warn('Magnetometer API not supported in this browser.');
+      this.logger.warn('Magnetometer API not supported in this browser.');
     }
   }
 
@@ -210,7 +224,7 @@ export class SensorService {
       try {
         this.magnetometerSensor.stop();
       } catch (err) {
-        console.error('Failed to stop magnetometer:', err);
+        this.logger.error('Failed to stop magnetometer:', err);
       }
     }
   }

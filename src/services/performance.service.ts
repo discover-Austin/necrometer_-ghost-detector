@@ -1,4 +1,4 @@
-import { Injectable, inject } from '@angular/core';
+import { Injectable, inject, OnDestroy } from '@angular/core';
 import { LoggerService } from './logger.service';
 import { AnalyticsService } from './analytics.service';
 
@@ -21,12 +21,13 @@ interface PerformanceMeasure {
 @Injectable({
   providedIn: 'root'
 })
-export class PerformanceService {
+export class PerformanceService implements OnDestroy {
   private logger = inject(LoggerService);
   private analytics = inject(AnalyticsService);
 
   private marks = new Map<string, PerformanceMark>();
   private measures: PerformanceMeasure[] = [];
+  private observers: PerformanceObserver[] = [];
 
   /**
    * Start a performance measurement
@@ -165,6 +166,7 @@ export class PerformanceService {
       });
 
       observer.observe({ entryTypes: ['longtask'] });
+      this.observers.push(observer);
       this.logger.info('Long task monitoring enabled');
     } catch (error) {
       this.logger.debug('Long task monitoring not available', error);
@@ -179,7 +181,7 @@ export class PerformanceService {
 
     try {
       // Largest Contentful Paint
-      new PerformanceObserver((list) => {
+      const lcpObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         const lastEntry = entries[entries.length - 1];
         this.logger.info('LCP:', lastEntry.startTime);
@@ -187,22 +189,36 @@ export class PerformanceService {
           metric: 'LCP',
           value: lastEntry.startTime
         });
-      }).observe({ entryTypes: ['largest-contentful-paint'] });
+      });
+      lcpObserver.observe({ entryTypes: ['largest-contentful-paint'] });
+      this.observers.push(lcpObserver);
 
       // First Input Delay
-      new PerformanceObserver((list) => {
+      const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          const fid = entry.processingStart - entry.startTime;
-          this.logger.info('FID:', fid);
-          this.analytics.trackEvent('web_vital', 'performance', {
-            metric: 'FID',
-            value: fid
-          });
+        entries.forEach((entry: PerformanceEntry) => {
+          // Type guard: check if entry has processingStart property
+          if ('processingStart' in entry && 'startTime' in entry) {
+            const fidEntry = entry as PerformanceEventTiming;
+            const fid = fidEntry.processingStart - fidEntry.startTime;
+            this.logger.info('FID:', fid);
+            this.analytics.trackEvent('web_vital', 'performance', {
+              metric: 'FID',
+              value: fid
+            });
+          }
         });
-      }).observe({ entryTypes: ['first-input'] });
+      });
+      fidObserver.observe({ entryTypes: ['first-input'] });
+      this.observers.push(fidObserver);
     } catch (error) {
       this.logger.debug('Core Web Vitals monitoring not available', error);
     }
+  }
+
+  ngOnDestroy(): void {
+    // Disconnect all performance observers
+    this.observers.forEach(observer => observer.disconnect());
+    this.observers = [];
   }
 }

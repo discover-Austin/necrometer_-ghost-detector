@@ -77,7 +77,7 @@ export class LoggerService {
    */
   performance(label: string, duration: number): void {
     if (this.logLevel <= LogLevel.INFO) {
-      console.log(`[PERF] ${label}: ${duration.toFixed(2)}ms`);
+      console.info(`[PERF] ${label}: ${duration.toFixed(2)}ms`);
     }
   }
 
@@ -106,7 +106,8 @@ export class LoggerService {
   private sendErrorToService(message: string, error?: any): void {
     // TODO: Implement external error logging service integration
     // e.g., Sentry, LogRocket, etc.
-    console.log('Error logged (would be sent to service):', message, error);
+    // This is intentionally using console.info as a placeholder for external service
+    console.info('Error logged (would be sent to service):', message, error);
   }
 
   /**

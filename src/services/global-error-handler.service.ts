@@ -9,9 +9,9 @@ import { LoggerService } from './logger.service';
 export class GlobalErrorHandler implements ErrorHandler {
   private logger = inject(LoggerService);
 
-  handleError(error: Error | any): void {
-    const errorMessage = error?.message || error?.toString() || 'Unknown error occurred';
-    const errorStack = error?.stack || '';
+  handleError(error: unknown): void {
+    const errorMessage = error instanceof Error ? error.message : (error && typeof error === 'object' && 'message' in error) ? String((error as any).message) : String(error);
+    const errorStack = error instanceof Error ? error.stack : '';
 
     // Log the error
     this.logger.error('Unhandled error caught by GlobalErrorHandler', {
@@ -33,12 +33,12 @@ export class GlobalErrorHandler implements ErrorHandler {
     }
   }
 
-  private sendToErrorTrackingService(error: any): void {
+  private sendToErrorTrackingService(error: unknown): void {
     // TODO: Integrate with error tracking service
     // Example: Sentry.captureException(error);
   }
 
-  private showUserErrorNotification(error: any): void {
+  private showUserErrorNotification(error: unknown): void {
     // This will be handled by the toast service once it's implemented
     const message = this.getUserFriendlyMessage(error);
 
@@ -50,8 +50,8 @@ export class GlobalErrorHandler implements ErrorHandler {
     }
   }
 
-  private getUserFriendlyMessage(error: any): string {
-    const message = error?.message?.toLowerCase() || '';
+  private getUserFriendlyMessage(error: unknown): string {
+    const message = (error instanceof Error ? error.message : String(error)).toLowerCase();
 
     // Map technical errors to user-friendly messages
     if (message.includes('api key')) {

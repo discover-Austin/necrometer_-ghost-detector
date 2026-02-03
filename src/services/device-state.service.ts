@@ -13,7 +13,7 @@ export class DeviceStateService implements OnDestroy {
   // Exponentially smoothed baseline value to compensate for the Earth's magnetic field.
   // The baseline will slowly adapt to environmental changes.
   private baselineMagnetometer: number | null = null;
-  private updateInterval: any;
+  private updateInterval: ReturnType<typeof setInterval>;
 
   constructor() {
     // Start the update loop when the service is created
