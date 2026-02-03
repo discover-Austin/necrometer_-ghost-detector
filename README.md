@@ -1,25 +1,77 @@
 
 # 👻 Necrometer - Ghost Detector
 
-A sophisticated paranormal activity scanner powered by AI. Detect, analyze, and contain paranormal entities using cutting-edge technology and Google's Gemini AI.
+> **🔄 REBUILT VERSION (2026)**: This app has been completely rebuilt to focus on subtle, autonomous anomaly detection. Previous features like user-triggered scans, AR entities, EVP analysis, and temporal echoes have been removed in favor of a more believable, restrained experience.
+
+A sophisticated paranormal activity scanner that simulates anomaly detection using device sensors. The app autonomously monitors environmental changes and presents visual irregularities in a clinical, ambiguous manner.
 
 [![Angular](https://img.shields.io/badge/Angular-20.3-red.svg)](https://angular.io)
 [![Capacitor](https://img.shields.io/badge/Capacitor-7.4-blue.svg)](https://capacitorjs.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org)
 
-## ✨ Features
+## ⚠️ Product Philosophy
 
-### Core Detection Features
-- **📡 Real-time Scanner**: Detect paranormal entities using device sensors and EMF readings
-- **👁️ Vision Mode**: AI-powered scene analysis using your device camera
-- **🎤 EVP Analyzer**: Electronic Voice Phenomenon detection and analysis
-- **📖 Logbook**: Track and manage all detected entities
-- **⏰ Temporal Echoes**: Discover historical events tied to spiritual activity
-- **🔮 Spectral Map**: Visualize paranormal hotspots in your area
-- **🛡️ Containment Rituals**: AI-generated procedures to contain detected entities
-- **⚡ Pro Mode**: Unlock advanced features and enhanced detection capabilities
+This app is **not** a real ghost detector. It is an **experiential scanner** designed to create ambiguity and restraint:
 
-### Advanced Features (NEW!)
+- The app notices things **before** the user does
+- Nothing is explicit, repeatable, or user-triggered
+- Ambiguity > clarity
+- Logs create meaning, not detection
+- If it feels "gamey," it's wrong
+
+## ✨ Core Features (Rebuilt)
+
+### Primary Interface
+- **📸 Visual Scanner**: Live camera feed with subtle ambient instability
+  - Always-on brightness fluctuations (±2-4%)
+  - Light digital noise overlay
+  - Subtle chromatic aberration at edges
+  - Autonomous anomaly manifestation (no user triggers)
+
+### Anomaly Detection System
+- **🔍 Background Monitoring**: Continuous sensor analysis
+  - Magnetometer variance tracking
+  - Accelerometer/gyroscope monitoring
+  - Motion detection with baseline modeling
+  - Multi-sensor correlation required for anomalies
+
+### Gating Conditions (All Required)
+1. **Cooldown**: 90-180 seconds since last anomaly
+2. **Sensor Variance**: 2+ sensors showing elevated variance
+3. **User Stillness**: Minimal accelerometer movement
+4. **Random Gate**: Probability increases slowly over time
+
+### Visual Anomaly Types
+- **Localized Blur**: Drifting blur patches (300-1200ms)
+- **Shadow Silhouette**: Brief shadow-like forms
+- **Distortion Ripple**: Lagging visual distortion
+
+### App Acknowledgment
+- **Delayed Response**: 500-1200ms after anomaly disappears
+- **Subtle Indicators**: Corner light pulses + status bar text
+- **Clinical Language**: "Unclassified visual irregularity observed"
+
+### Logbook
+- **📖 System Log**: Narrative anomaly event log
+  - Timestamp + description
+  - Duration estimate
+  - Clinical, non-theatrical language
+  - No raw sensor values exposed
+
+## ❌ Removed Features
+
+The following features have been intentionally removed:
+- ~~Scanner with EMF waveform~~
+- ~~EVP Analyzer~~
+- ~~Temporal Echoes (Chrono Scan)~~
+- ~~AR Entity Detection~~
+- ~~Scene Analysis~~
+- ~~AI-Generated Entity Profiles~~
+- ~~Containment Rituals~~
+- ~~Cross-Reference Database~~
+- ~~User-triggered scans~~
+
+## ✨ Advanced Features (Still Available)
 - **🎯 Toast Notifications**: Real-time, context-aware notifications for all app events
 - **📳 Haptic Feedback**: Tactile feedback for detections, containments, and UI interactions
 - **📶 Network Monitoring**: Automatic offline detection with queued request syncing
