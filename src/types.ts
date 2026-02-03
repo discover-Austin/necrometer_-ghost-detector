@@ -67,6 +67,7 @@ export interface Schedule {
   nextRun?: string;
 }
 
-// Note: AR features have been removed as part of the rebuild to focus on
+// Note: AR overlay features have been removed as part of the rebuild to focus on
 // autonomous anomaly detection. See anomaly-detection.service.ts for the new system.
-// The types above are kept for GeminiService methods that may still be used.
+// Scene analysis types (SceneAnalysisResult, SceneObject) are retained for GeminiService
+// API functionality, though not currently exposed in the UI.
