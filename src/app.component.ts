@@ -35,6 +35,14 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mainContent') mainContentRef!: ElementRef<HTMLElement>;
 
   constructor() {
+    // Track new anomaly events for badge
+    effect(() => {
+      const events = this.anomalyService.anomalyEvents();
+      if (events.length > 0 && this.activeView() !== 'logbook') {
+        this.hasNewDetections.set(true);
+      }
+    });
+    
     // Animate view changes
     effect(() => {
       this.activeView(); // depend on activeView
@@ -65,12 +73,6 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   hasNewDetections = signal(false);
-
-  trackNewDetection() {
-    if (this.activeView() !== 'logbook') {
-      this.hasNewDetections.set(true);
-    }
-  }
 
   viewLogbook() {
     this.initializeAudio();

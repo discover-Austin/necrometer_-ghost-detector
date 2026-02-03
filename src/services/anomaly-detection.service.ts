@@ -120,16 +120,19 @@ export class AnomalyDetectionService {
     const types: AnomalyEvent['type'][] = ['blur', 'shadow', 'distortion', 'edge-artifact'];
     const type = types[Math.floor(Math.random() * types.length)];
     
-    // Random off-center position, never same region twice
+    // Random off-center position, never same region twice, never centered
     let x, y;
     do {
-      // Position between 20-80% to avoid edges and center
+      // Position between 20-80% to avoid edges
       x = 20 + Math.random() * 60;
       y = 20 + Math.random() * 60;
     } while (
-      this.lastAnomalyPosition && 
-      Math.abs(x - this.lastAnomalyPosition.x) < 20 &&
-      Math.abs(y - this.lastAnomalyPosition.y) < 20
+      // Avoid repeating same region
+      (this.lastAnomalyPosition && 
+       Math.abs(x - this.lastAnomalyPosition.x) < 20 &&
+       Math.abs(y - this.lastAnomalyPosition.y) < 20) ||
+      // Avoid center area (40-60%)
+      (x >= 40 && x <= 60 && y >= 40 && y <= 60)
     );
     
     this.lastAnomalyPosition = { x, y };
