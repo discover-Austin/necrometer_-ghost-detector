@@ -56,11 +56,10 @@
       <div class="relative z-10 flex flex-col h-full p-4">
         @switch (activeView()) {
         @case ('vision') {
-        <app-vision class="flex-1" [detections]="detections()"></app-vision>
+        <app-vision class="flex-1"></app-vision>
         }
         @case ('logbook') {
-        <app-logbook class="flex-1" [detections]="detections()" [isLoading]="isLoading()" [error]="error()"
-          (containEntity)="handleContainEntity($event)">
+        <app-logbook class="flex-1" [anomalyEvents]="anomalyService.anomalyEvents()" [isLoading]="isLoading()" [error]="error()">
         </app-logbook>
         }
         @case ('store') {
