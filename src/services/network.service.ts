@@ -31,11 +31,16 @@ export class NetworkService implements OnDestroy {
       this.updateStatus(status);
 
       // Listen for network changes
-      this.networkListener = await Network.addListener('networkStatusChange', (status) => {
-        this.updateStatus(status);
-      });
-
-      this.logger.info('Network monitoring initialized');
+      try {
+        this.networkListener = await Network.addListener('networkStatusChange', (status) => {
+          this.updateStatus(status);
+        });
+        this.logger.info('Network monitoring initialized');
+      } catch (listenerError) {
+        this.logger.warn('Failed to add network status listener', listenerError);
+        // Fall back to browser API
+        this.useBrowserAPI();
+      }
     } catch (error) {
       this.logger.warn('Network monitoring not available', error);
       // Fallback to browser API

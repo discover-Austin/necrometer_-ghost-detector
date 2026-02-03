@@ -8,6 +8,8 @@ import { SplashScreen } from '@capacitor/splash-screen';
 import { AudioService } from './services/audio.service';
 import { SensorService } from './services/sensor.service';
 import { AnomalyDetectionService } from './services/anomaly-detection.service';
+import { LoggerService } from './services/logger.service';
+import { ToastService } from './services/toast.service';
 
 type View = 'vision' | 'logbook';
 
@@ -30,6 +32,8 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   audioService = inject(AudioService);
   private sensorService = inject(SensorService);
   anomalyService = inject(AnomalyDetectionService);
+  private logger = inject(LoggerService);
+  private toast = inject(ToastService);
   private isAudioInitialized = false;
 
   @ViewChild('mainContent') mainContentRef!: ElementRef<HTMLElement>;
@@ -67,15 +71,24 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
   private async initializeAudio() {
     if (!this.isAudioInitialized) {
-      await this.audioService.init();
-      this.isAudioInitialized = true;
+      try {
+        await this.audioService.init();
+        this.isAudioInitialized = true;
+      } catch (error) {
+        this.logger.error('Failed to initialize audio', error);
+        this.toast.warning('Audio features unavailable');
+        // Mark as initialized anyway to prevent repeated attempts
+        this.isAudioInitialized = true;
+      }
     }
   }
 
   hasNewDetections = signal(false);
 
   viewLogbook() {
-    this.initializeAudio();
+    this.initializeAudio().catch(error => {
+      this.logger.error('Error during audio initialization in viewLogbook', error);
+    });
     this.audioService.playUISound();
     this.activeView.set('logbook');
     this.activeViewIndex.set(1);
@@ -83,7 +96,9 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   }
 
   viewScanner() {
-    this.initializeAudio();
+    this.initializeAudio().catch(error => {
+      this.logger.error('Error during audio initialization in viewScanner', error);
+    });
     this.audioService.playUISound();
     this.activeView.set('vision');
     this.activeViewIndex.set(0);

@@ -1,16 +1,21 @@
-import { Injectable } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { VoiceRecorder } from 'capacitor-voice-recorder';
+import { LoggerService } from './logger.service';
+import { ToastService } from './toast.service';
 
 @Injectable({
   providedIn: 'root',
 })
 export class AudioService {
+  private logger = inject(LoggerService);
+  private toast = inject(ToastService);
   private audioContext: AudioContext | null = null;
   private staticGainNode: GainNode | null = null;
   private staticSource: AudioBufferSourceNode | null = null;
   private isInitialized = false;
   private isStaticPlaying = false;
   private lastRecordedBlob: Blob | null = null;
+  private initializationFailed = signal(false);
 
   private sounds: { [key: string]: AudioBuffer | null } = {
     uiClick: null,
@@ -28,7 +33,7 @@ export class AudioService {
       const arrayBuffer = await response.arrayBuffer();
       return await this.audioContext.decodeAudioData(arrayBuffer);
     } catch (error) {
-      console.error(`Failed to load sound: ${url}`, error);
+      this.logger.error(`Failed to load sound: ${url}`, error);
       return null;
     }
   }
@@ -104,17 +109,36 @@ export class AudioService {
   async init() {
     if (this.isInitialized || typeof window === 'undefined') return;
     
-    // Audio context must be created after a user gesture
-    this.audioContext = new AudioContext();
-    this.isInitialized = true;
+    try {
+      // Audio context must be created after a user gesture
+      this.audioContext = new AudioContext();
+      this.isInitialized = true;
 
-    // Load all sounds using base64 data URIs to avoid CORS issues
-    this.sounds.uiClick = await this.loadSound('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAADQBEADgASwBHAEUARgA+ADwAOwA6ADcANgA1ADcANwA4ADgAOQA6ADsAPAA+AEAAQgBDAEUA');
-    this.sounds.detection = await this.loadSound('data:audio/wav;base64,UklGRkIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVwAAAAAQz9APz09Ozc3NjQzMjAxMC8uLSwrKikoJyYlJCMhICAfHh0cGhsaFhUTERAQDw4NDAsKCQgHBgUEAwIBAAAA/v/5+fn49/f39fX18/Pz7+/v6+vr5+fn4+Pj3t7e2dnZ1dXV0tLSz8/Py8vLycnJxsbGxcXFw8PDu7u7srKyq6urpqampaWlpKSkoaGhoKCgn5+fnZ2dnJycm5ubmZmZl5eXlpaWk5OTkpKSkZGRj4+Pjo6OjY2NjIyMi4uLiYmJh4eHhoaGg4ODgoKCgYGBgICAf39/fX19fHx8e3t7enp6eXl5eHh4d3d3dXV1dHR0c3NzcXFxcHBwb29vbm5ubW1tbGxsampqaWlpaGhoZ2dnZmZmW1tbWlpaWVlZWFhYV1dXVVVVUlJS');
-    this.sounds.success = await this.loadSound('data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YUgAAACAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgID');
-    this.sounds.contain = await this.loadSound('data:audio/wav;base64,UklGRkIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVwAAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=');
-    this.sounds.staticLoop = await this.loadSound('data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YUgAAACgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCg==');
-    this.sounds.interactionHum = await this.loadSound('data:audio/wav;base64,UklGRlYAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVIAAAAAPz9AQEBAPz8/Pz8/Pj49PTw8PDs7Ozo6Ojk5OTg4ODc3NjY2NTU1NDQzMzIyMjExMTAwLy8uLSwrKyoqKSkoKCcnJyMTExMjIyMzM0NDU1NjY3Nzg4OTk6Ojs8PD09Pj4/P0BA');
+      // Load all sounds using base64 data URIs to avoid CORS issues
+      const soundPromises = [
+        this.loadSound('data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YQQAAAAADQBEADgASwBHAEUARgA+ADwAOwA6ADcANgA1ADcANwA4ADgAOQA6ADsAPAA+AEAAQgBDAEUA').then(buf => this.sounds.uiClick = buf),
+        this.loadSound('data:audio/wav;base64,UklGRkIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVwAAAAAQz9APz09Ozc3NjQzMjAxMC8uLSwrKikoJyYlJCMhICAfHh0cGhsaFhUTERAQDw4NDAsKCQgHBgUEAwIBAAAA/v/5+fn49/f39fX18/Pz7+/v6+vr5+fn4+Pj3t7e2dnZ1dXV0tLSz8/Py8vLycnJxsbGxcXFw8PDu7u7srKyq6urpqampaWlpKSkoaGhoKCgn5+fnZ2dnJycm5ubmZmZl5eXlpaWk5OTkpKSkZGRj4+Pjo6OjY2NjIyMi4uLiYmJh4eHhoaGg4ODgoKCgYGBgICAf39/fX19fHx8e3t7enp6eXl5eHh4d3d3dXV1dHR0c3NzcXFxcHBwb29vbm5ubW1tbGxsampqaWlpaGhoZ2dnZmZmW1tbWlpaWVlZWFhYV1dXVVVVUlJS').then(buf => this.sounds.detection = buf),
+        this.loadSound('data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YUgAAACAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgIDAwMDAgID').then(buf => this.sounds.success = buf),
+        this.loadSound('data:audio/wav;base64,UklGRkIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVwAAAAAMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzMzM=').then(buf => this.sounds.contain = buf),
+        this.loadSound('data:audio/wav;base64,UklGRlIAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YUgAAACgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCgoKCg==').then(buf => this.sounds.staticLoop = buf),
+        this.loadSound('data:audio/wav;base64,UklGRlYAAABXQVZFZm10IBAAAAABAAEARKwAAIhYAQACABAAZGF0YVIAAAAAPz9AQEBAPz8/Pz8/Pj49PTw8PDs7Ozo6Ojk5OTg4ODc3NjY2NTU1NDQzMzIyMjExMTAwLy8uLSwrKyoqKSkoKCcnJyMTExMjIyMzM0NDU1NjY3Nzg4OTk6Ojs8PD09Pj4/P0BA').then(buf => this.sounds.interactionHum = buf),
+      ];
+
+      await Promise.all(soundPromises);
+      
+      // Check if any sounds failed to load
+      const failedSounds = Object.entries(this.sounds).filter(([_, buf]) => buf === null);
+      if (failedSounds.length > 0) {
+        this.logger.warn(`Failed to load ${failedSounds.length} sound(s):`, failedSounds.map(([name]) => name));
+      } else {
+        this.logger.info('All audio sounds loaded successfully');
+      }
+    } catch (error) {
+      this.logger.error('Failed to initialize audio service', error);
+      this.initializationFailed.set(true);
+      this.isInitialized = false;
+      throw error; // Re-throw so caller knows initialization failed
+    }
   }
 
   private playSound(buffer: AudioBuffer | null, gain = 1.0) {
@@ -161,8 +185,15 @@ export class AudioService {
   }
 
   updateStaticLevel(emfReading: number) {
+    if (this.initializationFailed()) {
+      // Don't try to use audio if initialization failed
+      return;
+    }
+    
     if (!this.isInitialized) {
-        this.init().then(() => this.updateStaticLevel(emfReading));
+        this.init().catch(error => {
+          this.logger.error('Failed to initialize audio in updateStaticLevel', error);
+        });
         return;
     }
     

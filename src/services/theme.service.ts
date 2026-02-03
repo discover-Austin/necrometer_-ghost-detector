@@ -64,19 +64,24 @@ export class ThemeService implements OnDestroy {
   private setupAutoDetection(): void {
     if (typeof window === 'undefined') return;
 
-    this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    try {
+      this.mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
 
-    // Initial check
-    this.updateIsDark();
+      // Initial check
+      this.updateIsDark();
 
-    // Listen for changes
-    this.mediaQueryListener = () => {
-      if (this.mode() === 'auto') {
-        this.updateIsDark();
-      }
-    };
-    
-    this.mediaQuery.addEventListener('change', this.mediaQueryListener);
+      // Listen for changes
+      this.mediaQueryListener = () => {
+        if (this.mode() === 'auto') {
+          this.updateIsDark();
+        }
+      };
+      
+      this.mediaQuery.addEventListener('change', this.mediaQueryListener);
+    } catch (error) {
+      this.logger.warn('Failed to setup theme auto-detection', error);
+      // Fallback to manual theme selection
+    }
   }
 
   ngOnDestroy(): void {
