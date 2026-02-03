@@ -14,6 +14,59 @@ export interface DetectedEntity extends EntityProfile {
   emfReading: number;
 }
 
-// Note: AR, EVP, Temporal Echo, and Scene Analysis features have been removed
-// as part of the rebuild to focus on autonomous anomaly detection.
-// See anomaly-detection.service.ts for the new anomaly system.
+// Temporal Echo - historical event that left spiritual residue
+export interface TemporalEcho {
+  title: string;
+  era: string;
+  description: string;
+}
+
+// EVP (Electronic Voice Phenomenon) analysis result
+export interface EVPAnalysis {
+  transcription: string;
+  confidence: number;
+}
+
+// Cross-reference result from spectral database
+export interface CrossReferenceResult {
+  match: boolean;
+  details: string;
+}
+
+// Emotional resonance analysis of an entity
+export interface EmotionalResonanceResult {
+  emotions: string[];
+  summary: string;
+}
+
+// Containment ritual steps and outcome
+export interface ContainmentRitual {
+  steps: string[];
+  outcome: string;
+}
+
+// Scene analysis result with detected objects
+export interface SceneAnalysisResult {
+  objects: SceneObject[];
+}
+
+// Object detected in scene with polyline outlines
+export interface SceneObject {
+  name: string;
+  polylines: Array<Array<{ x: number; y: number }>>;
+}
+
+// Schedule for task scheduling service
+export interface Schedule {
+  id: string;
+  name?: string;
+  enabled?: boolean;
+  rrule?: string;
+  intervalMs?: number;
+  lastRun?: string;
+  nextRun?: string;
+}
+
+// Note: AR features have been removed as part of the rebuild to focus on
+// autonomous anomaly detection. See anomaly-detection.service.ts for the new system.
+// The types above are kept for GeminiService methods that may still be used.

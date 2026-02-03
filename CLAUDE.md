@@ -92,7 +92,7 @@ necrometer_-ghost-detector/
 │   ├── app.component.html            # Main layout with header/footer/views
 │   ├── main.ts                       # Bootstrap with zoneless CD
 │   ├── polyfills.ts                  # Browser polyfills
-│   ├── types.ts                      # TypeScript interfaces (INCOMPLETE - see issues)
+│   ├── types.ts                      # TypeScript interfaces (complete)
 │   ├── styles.css                    # Global styles (218 lines)
 │   ├── index.html                    # HTML entry point
 │   │
@@ -289,115 +289,65 @@ npx tsc --noEmit         # Type check only (passes)
 
 ## Known Issues and Errors
 
-### Critical Build Errors
+### Resolved Issues
 
-1. **Font Inlining Failure (403)**
-   - **Error**: `Inlining of fonts failed. https://fonts.googleapis.com/css2?family=Chakra+Petch returned status code: 403`
-   - **Location**: `src/index.html:12`
-   - **Impact**: Production build fails in some CI environments
-   - **Fix Options**:
-     - Disable font inlining in `angular.json` with `"optimization": { "fonts": false }`
-     - Host fonts locally
-     - Use different font loading strategy
+The following issues have been fixed:
 
-2. **ESLint Not Configured for Angular**
+1. ~~**Font Inlining Failure (403)**~~ - **FIXED**: Disabled font inlining in `angular.json` with `"optimization": { "fonts": false }`
+
+2. ~~**Missing Type Definitions**~~ - **FIXED**: All types added to `src/types.ts` (TemporalEcho, EVPAnalysis, CrossReferenceResult, EmotionalResonanceResult, ContainmentRitual, SceneAnalysisResult, SceneObject, Schedule)
+
+3. ~~**Duplicate CI Workflow**~~ - **FIXED**: Cleaned up `.github/workflows/ci.yml` to single workflow definition
+
+4. ~~**Unused Import**~~ - **FIXED**: Removed unused `Renderer2` from `app.component.ts`
+
+### Remaining Issues
+
+1. **ESLint Not Configured for Angular**
    - **Error**: `Cannot find "lint" target for the specified project`
    - **Impact**: `npm run lint` fails
    - **Fix**: Run `ng add angular-eslint`
 
-### Missing Type Definitions
-
-The `src/types.ts` file is incomplete. These types are imported by `gemini.service.ts` but don't exist:
-
-```typescript
-// Add these to src/types.ts:
-
-export interface TemporalEcho {
-  title: string;
-  era: string;
-  description: string;
-}
-
-export interface EVPAnalysis {
-  transcription: string;
-  confidence: number;
-}
-
-export interface CrossReferenceResult {
-  match: boolean;
-  details: string;
-}
-
-export interface EmotionalResonanceResult {
-  emotions: string[];
-  summary: string;
-}
-
-export interface ContainmentRitual {
-  steps: string[];
-  outcome: string;
-}
-
-export interface SceneAnalysisResult {
-  objects: SceneObject[];
-}
-
-export interface SceneObject {
-  name: string;
-  polylines: Array<Array<{x: number; y: number}>>;
-}
-
-// For scheduler.service.ts:
-export interface Schedule {
-  id: string;
-  name?: string;
-  enabled?: boolean;
-  rrule?: string;
-  intervalMs?: number;
-  lastRun?: string;
-  nextRun?: string;
-}
-```
-
-### CI/CD Issues
-
-1. **Duplicate CI Workflow**: `.github/workflows/ci.yml` contains two workflow definitions merged together (lines 1-27 and 28-86) - needs cleanup
-
-### Minor Code Issues
-
-1. **Unused Import**: `Renderer2` imported but not used in `app.component.ts`
-2. **Any Types**: Several services use `any` type (e.g., `magnetometerSensor: any` in sensor.service.ts)
+2. **Any Types**: Several services use `any` type (e.g., `magnetometerSensor: any` in sensor.service.ts) - minor, non-blocking
 
 ---
 
 ## Security Vulnerabilities
 
-**22 total vulnerabilities (6 moderate, 16 high)** from `npm audit`:
+**5 remaining vulnerabilities (3 moderate, 2 high)** after running `npm audit fix`:
 
-### High Severity
+Most vulnerabilities have been resolved. The remaining ones require breaking changes to fix.
 
-| Package | Vulnerability | Advisory |
-|---------|--------------|----------|
-| @angular/compiler | XSS via SVG/MathML attributes | GHSA-v4hv-rgfq-gp49 |
-| @angular/compiler | XSS via unsanitized SVG attributes | GHSA-jrmj-c5cx-3cw6 |
-| @angular/common | XSRF token leakage via protocol-relative URLs | GHSA-58c5-g7wp-6w37 |
-| body-parser | DoS when url encoding is used | GHSA-wqch-xfxh-vrr4 |
-| glob | Command injection via -c/--cmd | GHSA-5j98-mcp5-4vw2 |
-| jws | HMAC signature verification bypass | GHSA-869p-cjfg-cm3x |
-| node-forge | ASN.1 vulnerabilities (multiple) | GHSA-554w-wpv2-vw27 |
-| qs | arrayLimit bypass causing DoS | GHSA-6rw7-vpxm-498p |
-| tar | Path traversal, symlink poisoning | GHSA-29xp-372q-xqph |
-| @modelcontextprotocol/sdk | DNS rebinding, ReDoS | GHSA-w48q-cv73-mx4w |
+### Remaining Vulnerabilities
+
+| Package | Vulnerability | Notes |
+|---------|--------------|-------|
+| tar | Path traversal, symlink poisoning | Requires @capacitor/cli upgrade to v8+ |
+| @babel/runtime | RegExp complexity | Requires capacitor-voice-recorder downgrade |
 
 ### Resolution
 
 ```bash
-# Safe fixes (non-breaking)
+# Already applied - safe fixes
 npm audit fix
 
-# All fixes (may have breaking changes)
+# To fix remaining (BREAKING CHANGES - test thoroughly):
 npm audit fix --force
+# This will downgrade capacitor-voice-recorder to 1.1.1
+# and upgrade @capacitor/cli to 8.0.2
 ```
+
+### Previously Fixed (17 vulnerabilities)
+
+The following were resolved by `npm audit fix`:
+- @angular/compiler XSS vulnerabilities
+- @angular/common XSRF token leakage
+- body-parser DoS
+- glob command injection
+- jws HMAC signature bypass
+- node-forge ASN.1 vulnerabilities
+- qs DoS vulnerability
+- @modelcontextprotocol/sdk DNS rebinding
 
 ---
 
@@ -523,13 +473,20 @@ this.env.getStorageItem('key');
 
 ### GitHub Actions Workflows
 
-**ci.yml** (needs fixing - has duplicate content):
-1. Checkout code
-2. Setup Node.js 20
-3. Install dependencies
-4. TypeScript check (`npx tsc --noEmit`)
-5. Run server tests
-6. Angular production build
+**ci.yml**:
+Two-job pipeline with dependency:
+1. **server-tests** job:
+   - Checkout code
+   - Setup Node.js 20
+   - Install server dependencies
+   - Run server tests with mock env vars
+
+2. **client-build** job (depends on server-tests):
+   - Checkout code
+   - Setup Node.js 20
+   - Install root dependencies
+   - TypeScript check (`npx tsc --noEmit`)
+   - Angular production build
 
 **e2e.yml**:
 - Manual trigger for live integration tests
@@ -627,10 +584,10 @@ gemini.setProxyConfig('https://your-proxy.com', 'shared-token');
 
 ### Priority Fixes Needed
 
-1. **HIGH**: Fix missing type definitions in `src/types.ts`
-2. **HIGH**: Run `npm audit fix` for security vulnerabilities
-3. **MEDIUM**: Fix font inlining build error
-4. **MEDIUM**: Fix duplicate CI workflow in `.github/workflows/ci.yml`
+~~1. **HIGH**: Fix missing type definitions in `src/types.ts`~~ - **DONE**
+~~2. **HIGH**: Run `npm audit fix` for security vulnerabilities~~ - **DONE** (22 → 5 vulnerabilities)
+~~3. **MEDIUM**: Fix font inlining build error~~ - **DONE**
+~~4. **MEDIUM**: Fix duplicate CI workflow in `.github/workflows/ci.yml`~~ - **DONE**
 5. **LOW**: Configure angular-eslint for linting
 6. **LOW**: Add unit tests for core services
 
