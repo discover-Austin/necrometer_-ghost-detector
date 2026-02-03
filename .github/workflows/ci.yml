@@ -1,33 +1,6 @@
 name: CI
 
 on:
-  pull_request:
-  push:
-    branches: [ main ]
-
-jobs:
-  test-and-build:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-      - name: Install root dependencies
-        run: npm ci
-      - name: TypeScript check
-        run: npx tsc --noEmit
-      - name: Run server tests
-        run: |
-          cd server
-          npm ci
-          npm test --silent
-      - name: Build Angular app (production)
-        run: npx -p @angular/cli@^20 ng build --configuration production
-name: CI
-
-on:
   push:
     branches: [ main, master ]
   pull_request:
@@ -83,3 +56,4 @@ jobs:
         env:
           CI: true
         run: npm run build --silent
+
