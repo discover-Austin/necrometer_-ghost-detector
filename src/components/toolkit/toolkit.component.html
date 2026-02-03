@@ -1,0 +1,234 @@
+<div class="flex flex-col h-full text-white">
+  <div class="flex items-center justify-between mb-4">
+    <div>
+      <h2 class="text-2xl font-bold text-spectral-300 font-mono tracking-wider">FIELD TOOLKIT</h2>
+      <p class="text-xs text-spectral-600">Real-time instrumentation & session controls</p>
+    </div>
+    <button
+      (click)="toggleSession()"
+      class="px-4 py-2 rounded-lg text-xs font-mono uppercase tracking-wide border border-spectral-500/40 bg-obsidian-900/70 hover:bg-obsidian-800/80">
+      {{ sessionLog.sessionActive() ? 'End Session' : 'Begin Session' }}
+    </button>
+  </div>
+
+  <div class="grid grid-cols-2 gap-3 mb-4">
+    <div class="glass-panel p-3">
+      <p class="text-xs text-spectral-600">EMF LEVEL</p>
+      <div class="text-3xl font-bold text-spectral-200 font-mono">
+        {{ deviceState.emfReading() | number:'1.0-0' }}
+      </div>
+      <p class="text-xs text-spectral-600">µT (smoothed)</p>
+    </div>
+    <div class="glass-panel p-3">
+      <p class="text-xs text-spectral-600">PEAK</p>
+      <div class="text-3xl font-bold text-ectoplasm-400 font-mono">
+        {{ deviceState.highestEmf() | number:'1.0-0' }}
+      </div>
+      <p class="text-xs text-spectral-600">session max</p>
+    </div>
+  </div>
+
+  <div class="flex gap-2 overflow-x-auto pb-2">
+    <button
+      class="px-3 py-1.5 rounded-full text-xs font-mono border"
+      [class.bg-spectral-500/20]="activePanel() === 'emf'"
+      [class.border-spectral-500/50]="activePanel() === 'emf'"
+      [class.border-spectral-800/50]="activePanel() !== 'emf'"
+      (click)="setPanel('emf')">
+      EMF GRAPH
+    </button>
+    <button
+      class="px-3 py-1.5 rounded-full text-xs font-mono border"
+      [class.bg-spectral-500/20]="activePanel() === 'spirit'"
+      [class.border-spectral-500/50]="activePanel() === 'spirit'"
+      [class.border-spectral-800/50]="activePanel() !== 'spirit'"
+      (click)="setPanel('spirit')">
+      SPIRIT BOX
+    </button>
+    <button
+      class="px-3 py-1.5 rounded-full text-xs font-mono border"
+      [class.bg-spectral-500/20]="activePanel() === 'audio'"
+      [class.border-spectral-500/50]="activePanel() === 'audio'"
+      [class.border-spectral-800/50]="activePanel() !== 'audio'"
+      (click)="setPanel('audio')">
+      AUDIO
+    </button>
+    <button
+      class="px-3 py-1.5 rounded-full text-xs font-mono border"
+      [class.bg-spectral-500/20]="activePanel() === 'session'"
+      [class.border-spectral-500/50]="activePanel() === 'session'"
+      [class.border-spectral-800/50]="activePanel() !== 'session'"
+      (click)="setPanel('session')">
+      SESSION
+    </button>
+    <button
+      class="px-3 py-1.5 rounded-full text-xs font-mono border"
+      [class.bg-spectral-500/20]="activePanel() === 'settings'"
+      [class.border-spectral-500/50]="activePanel() === 'settings'"
+      [class.border-spectral-800/50]="activePanel() !== 'settings'"
+      (click)="setPanel('settings')">
+      SETTINGS
+    </button>
+  </div>
+
+  <div class="flex-1 overflow-y-auto mt-3 space-y-4">
+    @if (activePanel() === 'emf') {
+      <div class="glass-panel p-4">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg text-spectral-300 font-mono">EMF Trace</h3>
+            <p class="text-xs text-spectral-600">Filtered magnetometer output, updated every 100ms</p>
+          </div>
+          <div class="text-xs text-spectral-500 font-mono">{{ deviceState.emfAvailable() ? 'Sensor online' : 'Sensor unavailable' }}</div>
+        </div>
+        <div class="mt-4 h-24 w-full bg-black/40 rounded-lg border border-spectral-800/40 p-2 flex items-end gap-1">
+          @for (reading of deviceState.emfHistory(); track $index) {
+            <div
+              class="flex-1 rounded-sm"
+              [style.height.%]="reading"
+              [class.bg-ectoplasm-400]="reading > 65"
+              [class.bg-spectral-500]="reading <= 65">
+            </div>
+          }
+        </div>
+        <div class="mt-4 flex items-center justify-between">
+          <div class="text-xs text-spectral-600">Needle Calibration</div>
+          <div class="text-xs text-spectral-400 font-mono">Stability {{ sensorService.stabilityScore() | number:'1.0-2' }}</div>
+        </div>
+        <div class="mt-2 relative h-16">
+          <div class="absolute inset-0 flex items-center justify-center">
+            <div class="w-24 h-12 border-t border-spectral-500/50 rounded-t-full"></div>
+          </div>
+          <div class="absolute bottom-2 left-1/2 w-1 h-10 bg-ectoplasm-400 origin-bottom"
+            [style.transform]="'translateX(-50%) rotate(' + deviceState.meterRotation() + 'deg)'">
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activePanel() === 'spirit') {
+      <div class="glass-panel p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg text-spectral-300 font-mono">Spirit Box</h3>
+            <p class="text-xs text-spectral-600">Word generation tied to EMF variance</p>
+          </div>
+          @if (!monetization.isFeatureUnlocked('spiritBox')) {
+            <button
+              (click)="unlockFeature('spiritBox')"
+              class="px-3 py-1 text-xs font-mono rounded-full border border-warning-400/50 text-warning-400">
+              Unlock (20 NC)
+            </button>
+          }
+        </div>
+        <div class="text-xl font-mono text-ectoplasm-400">
+          {{ spiritBox.latestWord()?.word ?? '...' }}
+        </div>
+        <div class="space-y-2 max-h-40 overflow-y-auto">
+          @for (word of spiritBox.wordLog(); track word.timestamp) {
+            <div class="flex items-center justify-between text-xs text-spectral-500">
+              <span class="uppercase tracking-wider">{{ word.word }}</span>
+              <span>{{ word.timestamp | date:'HH:mm:ss' }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activePanel() === 'audio') {
+      <div class="glass-panel p-4 space-y-3">
+        <div class="flex items-center justify-between">
+          <div>
+            <h3 class="text-lg text-spectral-300 font-mono">Audio Spectrum</h3>
+            <p class="text-xs text-spectral-600">Microphone spikes highlight low/high bands</p>
+          </div>
+          <button
+            (click)="toggleAudioAnalyzer()"
+            class="px-3 py-1 text-xs font-mono rounded-full border border-spectral-500/50">
+            {{ audioAnalyzer.isActive() ? 'Stop' : 'Start' }}
+          </button>
+        </div>
+        @if (!monetization.isFeatureUnlocked('audioAnalyzer')) {
+          <div class="text-xs text-warning-400">Audio analyzer locked. Unlock with credits or watch a sponsor cue.</div>
+          <div class="flex gap-2">
+            <button class="px-3 py-1 text-xs rounded-full border border-warning-400/50" (click)="unlockFeature('audioAnalyzer')">Unlock (15 NC)</button>
+            <button class="px-3 py-1 text-xs rounded-full border border-spectral-500/50" (click)="grantAdUnlock('audioAnalyzer')">Sponsor Unlock</button>
+          </div>
+        }
+        <div class="flex gap-3 mt-3">
+          <div class="flex-1">
+            <p class="text-xs text-spectral-600">Low</p>
+            <div class="h-2 bg-obsidian-900 rounded">
+              <div class="h-full bg-spectral-500 rounded" [style.width.%]="audioAnalyzer.spectrum().low * 100"></div>
+            </div>
+          </div>
+          <div class="flex-1">
+            <p class="text-xs text-spectral-600">Mid</p>
+            <div class="h-2 bg-obsidian-900 rounded">
+              <div class="h-full bg-spectral-400 rounded" [style.width.%]="audioAnalyzer.spectrum().mid * 100"></div>
+            </div>
+          </div>
+          <div class="flex-1">
+            <p class="text-xs text-spectral-600">High</p>
+            <div class="h-2 bg-obsidian-900 rounded">
+              <div class="h-full bg-ectoplasm-400 rounded" [style.width.%]="audioAnalyzer.spectrum().high * 100"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+
+    @if (activePanel() === 'session') {
+      <div class="glass-panel p-4 space-y-3">
+        <h3 class="text-lg text-spectral-300 font-mono">Session Summary</h3>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <p class="text-spectral-600">Peak EMF</p>
+            <p class="text-spectral-200 font-mono">{{ sessionLog.getCurrentSummary()?.peakEmf ?? 0 | number:'1.0-0' }}</p>
+          </div>
+          <div>
+            <p class="text-spectral-600">Events Logged</p>
+            <p class="text-spectral-200 font-mono">{{ sessionLog.getCurrentSummary()?.events.length ?? 0 }}</p>
+          </div>
+        </div>
+        <div class="space-y-2 max-h-48 overflow-y-auto">
+          @for (event of sessionLog.getCurrentSummary()?.events ?? []; track event.timestamp) {
+            <div class="flex items-start justify-between text-xs text-spectral-500">
+              <span>{{ event.detail }}</span>
+              <span>{{ event.timestamp | date:'HH:mm:ss' }}</span>
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    @if (activePanel() === 'settings') {
+      <div class="glass-panel p-4 space-y-3">
+        <h3 class="text-lg text-spectral-300 font-mono">Settings & Access</h3>
+        <div class="grid grid-cols-2 gap-3 text-xs text-spectral-400">
+          <div>
+            <p>Sensor Permissions</p>
+            <p class="font-mono">{{ permissionService.status().sensors }}</p>
+          </div>
+          <div>
+            <p>Camera Permissions</p>
+            <p class="font-mono">{{ permissionService.status().camera }}</p>
+          </div>
+          <div>
+            <p>Microphone Permissions</p>
+            <p class="font-mono">{{ permissionService.status().microphone }}</p>
+          </div>
+          <div>
+            <p>Store Access</p>
+            <p class="font-mono">{{ monetization.adsEnabled() ? 'Sponsored' : 'Pro' }}</p>
+          </div>
+        </div>
+        <div class="flex flex-col gap-2">
+          <button class="px-3 py-2 rounded-lg text-xs font-mono border border-spectral-500/40" (click)="setTheme('auto')">Auto Theme</button>
+          <button class="px-3 py-2 rounded-lg text-xs font-mono border border-spectral-500/40" (click)="setTheme('dark')">Dark Lab</button>
+          <button class="px-3 py-2 rounded-lg text-xs font-mono border border-spectral-500/40" (click)="setTheme('light')">Light Lab</button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

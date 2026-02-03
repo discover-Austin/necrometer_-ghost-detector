@@ -57,6 +57,44 @@
     </button>
     </div>
   </div>
+
+  <div class="w-full space-y-4 my-6">
+    <h3 class="text-lg font-bold text-[var(--color-primary-300)] border-b border-[var(--color-primary-500)]/20 pb-1 mb-3">Unlock Field Modules</h3>
+    <div class="space-y-3 text-left">
+      <div class="flex items-center justify-between bg-black/30 p-3 rounded-lg border border-[var(--color-primary-500)]/20">
+        <div>
+          <p class="font-bold text-[var(--color-primary-300)]">Spirit Box</p>
+          <p class="text-xs text-gray-400">Sensor-driven word generator.</p>
+        </div>
+        <button class="px-3 py-1 rounded-md bg-[var(--color-primary-700)] text-white text-xs"
+          (click)="unlockFeature('spiritBox')">20 NC</button>
+      </div>
+      <div class="flex items-center justify-between bg-black/30 p-3 rounded-lg border border-[var(--color-primary-500)]/20">
+        <div>
+          <p class="font-bold text-[var(--color-primary-300)]">Audio Analyzer</p>
+          <p class="text-xs text-gray-400">Visual spectrum for EVP sweeps.</p>
+        </div>
+        <button class="px-3 py-1 rounded-md bg-[var(--color-primary-700)] text-white text-xs"
+          (click)="unlockFeature('audioAnalyzer')">15 NC</button>
+      </div>
+      <div class="flex items-center justify-between bg-black/30 p-3 rounded-lg border border-[var(--color-primary-500)]/20">
+        <div>
+          <p class="font-bold text-[var(--color-primary-300)]">Export Logs</p>
+          <p class="text-xs text-gray-400">Export session timeline.</p>
+        </div>
+        <button class="px-3 py-1 rounded-md bg-[var(--color-primary-700)] text-white text-xs"
+          (click)="unlockFeature('exportLogs')">10 NC</button>
+      </div>
+      <div class="flex items-center justify-between bg-black/30 p-3 rounded-lg border border-[var(--color-primary-500)]/20">
+        <div>
+          <p class="font-bold text-[var(--color-primary-300)]">Premium Themes</p>
+          <p class="text-xs text-gray-400">Lab palettes + night vision.</p>
+        </div>
+        <button class="px-3 py-1 rounded-md bg-[var(--color-primary-700)] text-white text-xs"
+          (click)="unlockFeature('premiumThemes')">10 NC</button>
+      </div>
+    </div>
+  </div>
   
   @if (!upgradeService.isPro()) {
     <div class="w-full pt-4 border-t border-[var(--color-primary-500)]/20">

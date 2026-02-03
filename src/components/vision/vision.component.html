@@ -54,6 +54,30 @@
         <span>{{ deviceState.emfReading() | number:'1.0-0' }} µT</span>
       </div>
     </div>
+    <div class="flex justify-between items-end">
+      <div class="text-xs text-spectral-500/60 font-mono">
+        <span>FIELD INTENSITY</span>
+      </div>
+      <div class="text-xs text-spectral-500/60 font-mono">
+        <span>{{ sensorService.stabilityScore() | number:'1.0-2' }} STABILITY</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="absolute inset-0 z-20 pointer-events-none flex items-center justify-center">
+    <div class="radar-ring"></div>
+    <div class="radar-ring radar-ring--mid"></div>
+    <div class="radar-ring radar-ring--outer"></div>
+    <div class="radar-sweep" [style.opacity]="deviceState.emfReading() / 140"></div>
+  </div>
+
+  <div class="absolute bottom-6 left-6 z-30 pointer-events-none">
+    <div class="emf-meter">
+      <div class="emf-needle" [style.transform]="'rotate(' + deviceState.meterRotation() + 'deg)'"></div>
+      <div class="emf-readout">
+        {{ deviceState.emfReading() | number:'1.0-0' }} µT
+      </div>
+    </div>
   </div>
 
   <!-- Camera Permission Error Overlay -->

@@ -28,10 +28,15 @@ export class SensorService {
 
   /**
    * Magnetic field magnitude in microteslas (µT) measured via the
-   * Generic Sensor API's Magnetometer.  Remains null if the API
-   * isn't supported or permission is denied.
+   * Generic Sensor API's Magnetometer. Values are smoothed with
+   * a low-pass filter to reduce sensor jitter before use by the UI.
    */
   magnetometer = signal<number | null>(null);
+  magnetometerRaw = signal<number | null>(null);
+  magnetometerSupported = signal(true);
+  permissionState = signal<'unknown' | 'granted' | 'denied'>('unknown');
+  private filteredMagnetometer: number | null = null;
+  private readonly magnetometerFilterAlpha = 0.18;
 
   // Sensor history tracking for deviation calculation
   private accelerometerHistory = signal<SensorHistory>({
@@ -167,17 +172,21 @@ export class SensorService {
         const permissionState = await (DeviceOrientationEvent as any).requestPermission();
         if (permissionState === 'granted') {
           this.hasPermissions.set(true);
+          this.permissionState.set('granted');
         } else {
           this.logger.warn('Permission for Device Orientation not granted.');
+          this.permissionState.set('denied');
           return;
         }
       } catch (error) {
         this.logger.error('Error requesting device orientation permission:', error);
+        this.permissionState.set('denied');
         return;
       }
     } else {
       // For other browsers, permission is often granted by default or handled differently
       this.hasPermissions.set(true);
+      this.permissionState.set('granted');
     }
 
     if (this.hasPermissions()) {
@@ -196,10 +205,11 @@ export class SensorService {
           const y: number = this.magnetometerSensor.y ?? 0;
           const z: number = this.magnetometerSensor.z ?? 0;
           const magnitude = Math.sqrt(x * x + y * y + z * z);
-          this.magnetometer.set(magnitude);
+          this.magnetometerRaw.set(magnitude);
+          this.magnetometer.set(this.applyLowPassFilter(magnitude));
           
           // Track magnetometer history
-          this.updateHistory(this.magnetometerHistory, magnitude);
+          this.updateHistory(this.magnetometerHistory, this.magnetometer() ?? magnitude);
         });
         this.magnetometerSensor.addEventListener('error', (event: Event) => {
           const errorEvent = event as { error?: unknown };
@@ -210,6 +220,7 @@ export class SensorService {
         this.logger.error('Failed to start magnetometer:', err);
       }
     } else {
+      this.magnetometerSupported.set(false);
       this.logger.warn('Magnetometer API not supported in this browser.');
     }
   }
@@ -227,5 +238,16 @@ export class SensorService {
         this.logger.error('Failed to stop magnetometer:', err);
       }
     }
+  }
+
+  private applyLowPassFilter(value: number): number {
+    if (this.filteredMagnetometer == null) {
+      this.filteredMagnetometer = value;
+      return value;
+    }
+    this.filteredMagnetometer =
+      this.filteredMagnetometer +
+      (value - this.filteredMagnetometer) * this.magnetometerFilterAlpha;
+    return this.filteredMagnetometer;
   }
 }

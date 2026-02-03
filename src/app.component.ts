@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { LogbookComponent } from './components/logbook/logbook.component';
 import { VisionComponent } from './components/vision/vision.component';
 import { ToastComponent } from './components/toast/toast.component';
+import { ToolkitComponent } from './components/toolkit/toolkit.component';
+import { UpgradeComponent } from './components/upgrade/upgrade.component';
 import { DeviceStateService } from './services/device-state.service';
 import { SplashScreen } from '@capacitor/splash-screen';
 import { AudioService } from './services/audio.service';
@@ -10,8 +12,10 @@ import { SensorService } from './services/sensor.service';
 import { AnomalyDetectionService } from './services/anomaly-detection.service';
 import { LoggerService } from './services/logger.service';
 import { ToastService } from './services/toast.service';
+import { PermissionService } from './services/permission.service';
+import { UpgradeService } from './services/upgrade.service';
 
-type View = 'vision' | 'logbook';
+type View = 'vision' | 'toolkit' | 'logbook' | 'store';
 
 @Component({
   selector: 'app-root',
@@ -22,6 +26,8 @@ type View = 'vision' | 'logbook';
     LogbookComponent,
     VisionComponent,
     ToastComponent,
+    ToolkitComponent,
+    UpgradeComponent,
   ],
 })
 export class AppComponent implements AfterViewInit, OnDestroy {
@@ -36,6 +42,8 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   anomalyService = inject(AnomalyDetectionService);
   private logger = inject(LoggerService);
   private toast = inject(ToastService);
+  private permissionService = inject(PermissionService);
+  upgradeService = inject(UpgradeService);
   private isAudioInitialized = false;
 
   @ViewChild('mainContent') mainContentRef!: ElementRef<HTMLElement>;
@@ -58,6 +66,13 @@ export class AppComponent implements AfterViewInit, OnDestroy {
         // Trigger reflow to restart animation
         void element.offsetWidth;
         element.classList.add('view-fade-in');
+      }
+    });
+
+    effect(() => {
+      const permissionState = this.sensorService.permissionState();
+      if (permissionState !== 'unknown') {
+        this.permissionService.updateSensors(permissionState);
       }
     });
   }
@@ -94,7 +109,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     });
     this.audioService.playUISound();
     this.activeView.set('logbook');
-    this.activeViewIndex.set(1);
+    this.activeViewIndex.set(2);
     this.hasNewDetections.set(false);
   }
 
@@ -107,22 +122,53 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.activeViewIndex.set(0);
   }
 
+  viewToolkit() {
+    this.initializeAudio().catch(error => {
+      this.logger.error('Error during audio initialization in viewToolkit', error);
+    });
+    this.audioService.playUISound();
+    this.activeView.set('toolkit');
+    this.activeViewIndex.set(1);
+  }
+
+  viewStore() {
+    this.initializeAudio().catch(error => {
+      this.logger.error('Error during audio initialization in viewStore', error);
+    });
+    this.audioService.playUISound();
+    this.activeView.set('store');
+    this.activeViewIndex.set(3);
+  }
+
   onNavigationKeydown(event: KeyboardEvent, view: View) {
     if (event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       if (view === 'vision') {
         this.viewScanner();
+      } else if (view === 'toolkit') {
+        this.viewToolkit();
       } else if (view === 'logbook') {
         this.viewLogbook();
+      } else if (view === 'store') {
+        this.viewStore();
       }
     }
     // Arrow key navigation
     if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
       event.preventDefault();
-      if (this.activeView() === 'vision') {
+      const order: View[] = ['vision', 'toolkit', 'logbook', 'store'];
+      const currentIndex = order.indexOf(this.activeView());
+      const direction = event.key === 'ArrowRight' ? 1 : -1;
+      const nextIndex = (currentIndex + direction + order.length) % order.length;
+      const nextView = order[nextIndex];
+      if (nextView === 'vision') {
+        this.viewScanner();
+      } else if (nextView === 'toolkit') {
+        this.viewToolkit();
+      } else if (nextView === 'logbook') {
         this.viewLogbook();
       } else {
-        this.viewScanner();
+        this.viewStore();
       }
     }
   }
@@ -132,5 +178,9 @@ export class AppComponent implements AfterViewInit, OnDestroy {
       this.mainContentRef.nativeElement.focus();
       this.mainContentRef.nativeElement.scrollIntoView();
     }
+  }
+
+  completeOnboarding() {
+    this.permissionService.completeOnboarding();
   }
 }

@@ -43,7 +43,7 @@
       class="flex-1 min-h-0 relative overflow-y-auto overflow-x-hidden scrollbar-hide"
       tabindex="-1"
       role="main"
-      [attr.aria-label]="activeView() === 'vision' ? 'Scanner view' : 'System log view'">
+       [attr.aria-label]="activeView() === 'vision' ? 'Scanner view' : 'Toolkit view'">
       <!-- Grid Background Pattern -->
       <div class="absolute inset-0 z-0 opacity-[0.03]"
         style="background-image: radial-gradient(#22d3ee 1px, transparent 1px); background-size: 20px 20px;"
@@ -62,38 +62,67 @@
         </div>
       }
 
-      <div class="relative z-10 flex flex-col h-full p-4">
-        @switch (activeView()) {
-        @case ('vision') {
-        <app-vision class="flex-1"></app-vision>
-        }
-        @case ('logbook') {
-        <app-logbook 
-          class="flex-1" 
-          [anomalyEvents]="anomalyService.anomalyEvents()"
-          [isLoading]="isLoading()"
-          [error]="error()">
-        </app-logbook>
-        }
-        }
-      </div>
-    </main>
+       <div class="relative z-10 flex flex-col h-full p-4">
+         @switch (activeView()) {
+         @case ('vision') {
+         <app-vision class="flex-1"></app-vision>
+         }
+         @case ('toolkit') {
+         <app-toolkit class="flex-1"></app-toolkit>
+         }
+         @case ('logbook') {
+         <app-logbook 
+           class="flex-1" 
+           [anomalyEvents]="anomalyService.anomalyEvents()"
+           [isLoading]="isLoading()"
+           [error]="error()">
+         </app-logbook>
+         }
+         @case ('store') {
+         <app-upgrade class="flex-1"></app-upgrade>
+         }
+         }
+       </div>
+     </main>
+
+     @if (!permissionService.onboardingComplete()) {
+       <div class="absolute inset-0 z-[60] bg-black/90 flex items-center justify-center p-6">
+         <div class="max-w-md w-full glass-panel p-6 text-center space-y-4">
+           <h2 class="text-xl font-bold text-spectral-300 font-mono">Field Access Briefing</h2>
+           <p class="text-sm text-spectral-500">
+             Necrometer uses real sensors, camera, and optional audio analysis. Grant access when
+             prompted for a full investigation experience.
+           </p>
+           <div class="text-xs text-spectral-600 grid grid-cols-2 gap-2">
+             <span>Camera: {{ permissionService.status().camera }}</span>
+             <span>Sensors: {{ permissionService.status().sensors }}</span>
+             <span>Microphone: {{ permissionService.status().microphone }}</span>
+             <span>Store: {{ upgradeService.isPro() ? 'Pro access' : 'Free tier' }}</span>
+           </div>
+           <button
+             class="w-full py-2 rounded-lg bg-spectral-600 text-white font-mono uppercase text-sm"
+             (click)="completeOnboarding()">
+             Continue
+           </button>
+         </div>
+       </div>
+     }
 
     <!-- Footer / Navigation -->
     <footer class="h-[80px] shrink-0 relative bg-obsidian-950/90 backdrop-blur-xl border-t border-spectral-500/20 z-50">
 
-      <!-- Tab Bar -->
-      <nav 
-        class="flex justify-around items-center h-full px-2" 
-        role="tablist" 
-        aria-label="Main navigation">
+       <!-- Tab Bar -->
+       <nav 
+         class="flex justify-around items-center h-full px-2" 
+         role="tablist" 
+         aria-label="Main navigation">
 
-        <!-- Vision (Primary Scanner) -->
-        <button 
-          (click)="viewScanner()"
-          (keydown)="onNavigationKeydown($event, 'vision')"
-          class="group relative flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-spectral-400 focus:ring-offset-2 focus:ring-offset-obsidian-950"
-          [class.bg-spectral-500/10]="activeView() === 'vision'"
+         <!-- Vision (Primary Scanner) -->
+         <button 
+           (click)="viewScanner()"
+           (keydown)="onNavigationKeydown($event, 'vision')"
+           class="group relative flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-spectral-400 focus:ring-offset-2 focus:ring-offset-obsidian-950"
+           [class.bg-spectral-500/10]="activeView() === 'vision'"
           role="tab"
           [attr.aria-selected]="activeView() === 'vision'"
           [attr.aria-controls]="'main-content'"
@@ -113,12 +142,32 @@
           <span class="text-[0.6rem] uppercase tracking-wider mt-1 font-mono transition-colors duration-300"
             [class.text-spectral-400]="activeView() === 'vision'"
             [class.text-slate-600]="activeView() !== 'vision'">Scan</span>
-        </button>
+         </button>
 
-        <!-- Logbook (Central) -->
-        <button 
-          (click)="viewLogbook()" 
-          (keydown)="onNavigationKeydown($event, 'logbook')"
+         <button 
+           (click)="viewToolkit()"
+           (keydown)="onNavigationKeydown($event, 'toolkit')"
+           class="group relative flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-spectral-400 focus:ring-offset-2 focus:ring-offset-obsidian-950"
+           [class.bg-spectral-500/10]="activeView() === 'toolkit'"
+           role="tab"
+           [attr.aria-selected]="activeView() === 'toolkit'"
+           [attr.aria-controls]="'main-content'"
+           tabindex="0"
+           aria-label="Toolkit view">
+           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 z-10 transition-colors duration-300"
+             [class.text-spectral-300]="activeView() === 'toolkit'" [class.text-slate-500]="activeView() !== 'toolkit'"
+             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M13 16h-1v-4h-1m1-4h.01M12 20a8 8 0 100-16 8 8 0 000 16z" />
+           </svg>
+           <span class="text-[0.6rem] uppercase tracking-wider mt-1 font-mono transition-colors duration-300"
+             [class.text-spectral-400]="activeView() === 'toolkit'"
+             [class.text-slate-600]="activeView() !== 'toolkit'">Toolkit</span>
+         </button>
+
+         <!-- Logbook (Central) -->
+         <button 
+           (click)="viewLogbook()" 
+           (keydown)="onNavigationKeydown($event, 'logbook')"
           class="relative -top-6 focus:outline-none focus:ring-2 focus:ring-spectral-400 focus:ring-offset-2 focus:ring-offset-obsidian-950 rounded-full"
           role="tab"
           [attr.aria-selected]="activeView() === 'logbook'"
@@ -143,10 +192,31 @@
           </div>
           <span
             class="text-[0.6rem] uppercase tracking-wider mt-1 font-mono text-spectral-400 absolute -bottom-5 left-1/2 -translate-x-1/2">Logs</span>
-        </button>
+         </button>
 
-      </nav>
-    </footer>
+         <button 
+           (click)="viewStore()"
+           (keydown)="onNavigationKeydown($event, 'store')"
+           class="group relative flex flex-col items-center justify-center w-14 h-14 rounded-xl transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-spectral-400 focus:ring-offset-2 focus:ring-offset-obsidian-950"
+           [class.bg-spectral-500/10]="activeView() === 'store'"
+           role="tab"
+           [attr.aria-selected]="activeView() === 'store'"
+           [attr.aria-controls]="'main-content'"
+           tabindex="0"
+           aria-label="Store view">
+           <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6 z-10 transition-colors duration-300"
+             [class.text-spectral-300]="activeView() === 'store'" [class.text-slate-500]="activeView() !== 'store'"
+             fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2" aria-hidden="true">
+             <path stroke-linecap="round" stroke-linejoin="round" d="M3 3h18l-1 13a2 2 0 01-2 2H6a2 2 0 01-2-2L3 3z" />
+             <path stroke-linecap="round" stroke-linejoin="round" d="M16 6a4 4 0 01-8 0" />
+           </svg>
+           <span class="text-[0.6rem] uppercase tracking-wider mt-1 font-mono transition-colors duration-300"
+             [class.text-spectral-400]="activeView() === 'store'"
+             [class.text-slate-600]="activeView() !== 'store'">Store</span>
+         </button>
+
+       </nav>
+     </footer>
   </div>
 </div>
 

@@ -7,17 +7,34 @@
     </div>
   }
 
+  <div class="flex items-center gap-2 mb-4">
+    <button class="px-3 py-1 rounded-full text-xs font-mono border"
+      [class.bg-spectral-500/20]="activeTab() === 'anomalies'"
+      [class.border-spectral-500/50]="activeTab() === 'anomalies'"
+      [class.border-spectral-800/50]="activeTab() !== 'anomalies'"
+      (click)="setTab('anomalies')">
+      Anomalies
+    </button>
+    <button class="px-3 py-1 rounded-full text-xs font-mono border"
+      [class.bg-spectral-500/20]="activeTab() === 'sessions'"
+      [class.border-spectral-500/50]="activeTab() === 'sessions'"
+      [class.border-spectral-800/50]="activeTab() !== 'sessions'"
+      (click)="setTab('sessions')">
+      Sessions
+    </button>
+  </div>
+
   @if (isLoading) {
     <div class="flex items-center justify-center flex-grow" role="status" aria-live="polite">
       <p class="text-spectral-400 font-mono">Loading anomaly data...</p>
     </div>
-  } @else if (anomalyEvents.length === 0) {
+  } @else if (activeTab() === 'anomalies' && anomalyEvents.length === 0) {
     <div class="flex flex-col items-center justify-center flex-grow text-center p-4 bg-obsidian-900/50 rounded-lg">
       <svg class="w-16 h-16 text-gray-600 mb-4" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 11-18 0 9 9 0 0118 0zm-9 5.25h.008v.008H12v-.008z" /></svg>
       <p class="text-xl text-gray-400 font-mono">No anomalies logged.</p>
       <p class="text-md text-gray-500 font-mono">System is monitoring.</p>
     </div>
-  } @else {
+  } @else if (activeTab() === 'anomalies') {
     <div class="space-y-3 overflow-y-auto pr-2">
       @for (event of anomalyEvents; track event.id) {
         <div class="rounded-lg bg-obsidian-900/60 border-l-4 border-spectral-500/50 transition-all duration-300 hover:shadow-lg hover:shadow-spectral-800/30 hover:border-spectral-400/70">
@@ -78,6 +95,37 @@
           </div>
         </div>
       }
+    </div>
+  } @else {
+    <div class="glass-panel p-4 space-y-3">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-mono text-spectral-300">Session Timeline</h3>
+        <button class="px-3 py-1 text-xs font-mono rounded-full border border-spectral-500/40"
+          (click)="exportSessions()">
+          Export JSON
+        </button>
+      </div>
+      <div class="space-y-2 max-h-[360px] overflow-y-auto">
+        @for (session of sessionLog.sessions(); track session.id) {
+          <div class="bg-black/40 border border-spectral-900/50 rounded-lg p-3 text-xs font-mono space-y-1">
+            <div class="flex justify-between text-spectral-400">
+              <span>{{ session.id }}</span>
+              <span>{{ session.startedAt | date:'MMM d HH:mm' }}</span>
+            </div>
+            <div class="flex justify-between text-spectral-500">
+              <span>Peak EMF: {{ session.peakEmf | number:'1.0-0' }}</span>
+              <span>Events: {{ session.events.length }}</span>
+            </div>
+            <div class="text-spectral-600">
+              Words: {{ session.words.length }} | Duration:
+              {{ session.endedAt ? ((session.endedAt - session.startedAt) / 60000 | number:'1.0-1') : 0 }} min
+            </div>
+          </div>
+        }
+        @if (sessionLog.sessions().length === 0) {
+          <div class="text-center text-spectral-500">No sessions recorded yet.</div>
+        }
+      </div>
     </div>
   }
 </div>
