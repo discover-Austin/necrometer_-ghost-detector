@@ -27,6 +27,8 @@ type View = 'vision' | 'logbook';
 export class AppComponent implements AfterViewInit, OnDestroy {
   activeView = signal<View>('vision');
   activeViewIndex = signal(0);
+  isLoading = signal(false);
+  error = signal<string | null>(null);
 
   deviceState = inject(DeviceStateService);
   audioService = inject(AudioService);
@@ -69,6 +71,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.sensorService.stop();
     this.anomalyService.stop();
   }
+  
   private async initializeAudio() {
     if (!this.isAudioInitialized) {
       try {
@@ -102,5 +105,32 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     this.audioService.playUISound();
     this.activeView.set('vision');
     this.activeViewIndex.set(0);
+  }
+
+  onNavigationKeydown(event: KeyboardEvent, view: View) {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      if (view === 'vision') {
+        this.viewScanner();
+      } else if (view === 'logbook') {
+        this.viewLogbook();
+      }
+    }
+    // Arrow key navigation
+    if (event.key === 'ArrowLeft' || event.key === 'ArrowRight') {
+      event.preventDefault();
+      if (this.activeView() === 'vision') {
+        this.viewLogbook();
+      } else {
+        this.viewScanner();
+      }
+    }
+  }
+
+  skipToMain() {
+    if (this.mainContentRef) {
+      this.mainContentRef.nativeElement.focus();
+      this.mainContentRef.nativeElement.scrollIntoView();
+    }
   }
 }
