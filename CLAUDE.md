@@ -614,12 +614,13 @@ warning-{400-500}   /* Amber - credits/warnings */
 
 The 2026 rebuild removed these features for cleaner autonomous detection:
 
-- AR entity overlays
-- EVP audio analysis (methods remain in GeminiService but unused)
-- Temporal echoes (methods remain in GeminiService but unused)
-- Scene analysis (methods remain in GeminiService but unused)
+- AR entity overlays (visual entity rendering on camera feed)
+- EVP audio analysis UI (methods remain in GeminiService for future use)
+- Temporal echoes UI (methods remain in GeminiService for future use)
 - User-triggered scans
 - Chrono-scan feature
+
+**Note**: Scene analysis types (`SceneAnalysisResult`, `SceneObject`) and related GeminiService methods are retained for potential future use or API functionality, though not currently exposed in the UI.
 
 ---
 
