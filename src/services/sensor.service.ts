@@ -1,4 +1,5 @@
-import { Injectable, signal, computed } from '@angular/core';
+import { Injectable, signal, computed, inject } from '@angular/core';
+import { LoggerService } from './logger.service';
 
 // Magnetometer type definition for Generic Sensor API
 interface Magnetometer extends EventTarget {
@@ -20,6 +21,8 @@ interface SensorHistory {
   providedIn: 'root',
 })
 export class SensorService {
+  private logger = inject(LoggerService);
+  
   orientation = signal<{ alpha: number; beta: number; gamma: number } | null>(null);
   motion = signal<{ x: number; y: number; z: number } | null>(null);
 
@@ -154,7 +157,7 @@ export class SensorService {
 
   async start(): Promise<void> {
     if (typeof window === 'undefined' || typeof DeviceOrientationEvent === 'undefined') {
-      console.warn('Device Orientation API not supported.');
+      this.logger.warn('Device Orientation API not supported.');
       return;
     }
 
@@ -165,11 +168,11 @@ export class SensorService {
         if (permissionState === 'granted') {
           this.hasPermissions.set(true);
         } else {
-          console.warn('Permission for Device Orientation not granted.');
+          this.logger.warn('Permission for Device Orientation not granted.');
           return;
         }
       } catch (error) {
-        console.error('Error requesting device orientation permission:', error);
+        this.logger.error('Error requesting device orientation permission:', error);
         return;
       }
     } else {
@@ -199,14 +202,14 @@ export class SensorService {
           this.updateHistory(this.magnetometerHistory, magnitude);
         });
         this.magnetometerSensor.addEventListener('error', (event: Event) => {
-          console.error('Magnetometer error:', (event as any).error);
+          this.logger.error('Magnetometer error:', (event as any).error);
         });
         this.magnetometerSensor.start();
       } catch (err) {
-        console.error('Failed to start magnetometer:', err);
+        this.logger.error('Failed to start magnetometer:', err);
       }
     } else {
-      console.warn('Magnetometer API not supported in this browser.');
+      this.logger.warn('Magnetometer API not supported in this browser.');
     }
   }
 
@@ -220,7 +223,7 @@ export class SensorService {
       try {
         this.magnetometerSensor.stop();
       } catch (err) {
-        console.error('Failed to stop magnetometer:', err);
+        this.logger.error('Failed to stop magnetometer:', err);
       }
     }
   }

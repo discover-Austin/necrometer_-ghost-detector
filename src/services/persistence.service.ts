@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 import { DetectedEntity } from '../types';
+import { LoggerService } from './logger.service';
 
 const DETECTIONS_STORAGE_KEY = 'necrometer_detections';
 
@@ -7,13 +8,14 @@ const DETECTIONS_STORAGE_KEY = 'necrometer_detections';
   providedIn: 'root',
 })
 export class PersistenceService {
+  private logger = inject(LoggerService);
 
   saveDetections(detections: DetectedEntity[]): void {
     try {
       const data = JSON.stringify(detections);
       localStorage.setItem(DETECTIONS_STORAGE_KEY, data);
     } catch (error) {
-      console.error('Error saving detections to localStorage', error);
+      this.logger.error('Error saving detections to localStorage', error);
     }
   }
 
@@ -29,7 +31,7 @@ export class PersistenceService {
         }));
       }
     } catch (error) {
-      console.error('Error loading detections from localStorage', error);
+      this.logger.error('Error loading detections from localStorage', error);
       // If there's an error, clear the corrupted data to prevent future issues
       localStorage.removeItem(DETECTIONS_STORAGE_KEY);
     }

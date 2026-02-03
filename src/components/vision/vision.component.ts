@@ -4,6 +4,7 @@ import { DeviceStateService } from '../../services/device-state.service';
 import { CameraPreview } from '@capacitor-community/camera-preview';
 import { App, PluginListenerHandle } from '@capacitor/app';
 import { AnomalyDetectionService, AnomalyEvent } from '../../services/anomaly-detection.service';
+import { LoggerService } from '../../services/logger.service';
 
 @Component({
   selector: 'app-vision',
@@ -15,6 +16,7 @@ import { AnomalyDetectionService, AnomalyEvent } from '../../services/anomaly-de
 export class VisionComponent implements OnInit, OnDestroy {
   deviceState = inject(DeviceStateService);
   private anomalyService = inject(AnomalyDetectionService);
+  private logger = inject(LoggerService);
 
   isCameraActive = false;
   cameraPermissionError = signal<string | null>(null);
@@ -86,7 +88,7 @@ export class VisionComponent implements OnInit, OnDestroy {
     try {
       await CameraPreview.stop();
     } catch (e) {
-      console.warn("Could not stop camera preview", e);
+      this.logger.warn("Could not stop camera preview", e);
     }
   }
 

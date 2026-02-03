@@ -1,4 +1,4 @@
-import { Injectable } from '@angular/core';
+import { Injectable, inject } from '@angular/core';
 
 /**
  * Environment configuration service
@@ -8,6 +8,7 @@ import { Injectable } from '@angular/core';
   providedIn: 'root'
 })
 export class EnvironmentService {
+  private logger?: any; // Late initialization to avoid circular dependency
   private readonly STORAGE_KEY_PREFIX = 'necrometer.';
 
   /**
@@ -58,7 +59,7 @@ export class EnvironmentService {
     try {
       return localStorage.getItem(`${this.STORAGE_KEY_PREFIX}${key}`);
     } catch (error) {
-      console.warn(`Failed to get storage item ${key}:`, error);
+      this.getLogger()?.warn(`Failed to get storage item ${key}:`, error);
       return null;
     }
   }
@@ -71,7 +72,7 @@ export class EnvironmentService {
       localStorage.setItem(`${this.STORAGE_KEY_PREFIX}${key}`, value);
       return true;
     } catch (error) {
-      console.error(`Failed to set storage item ${key}:`, error);
+      this.getLogger()?.error(`Failed to set storage item ${key}:`, error);
       return false;
     }
   }
@@ -84,7 +85,7 @@ export class EnvironmentService {
       localStorage.removeItem(`${this.STORAGE_KEY_PREFIX}${key}`);
       return true;
     } catch (error) {
-      console.warn(`Failed to remove storage item ${key}:`, error);
+      this.getLogger()?.warn(`Failed to remove storage item ${key}:`, error);
       return false;
     }
   }
@@ -104,9 +105,26 @@ export class EnvironmentService {
       keysToRemove.forEach(key => localStorage.removeItem(key));
       return true;
     } catch (error) {
-      console.error('Failed to clear storage:', error);
+      this.getLogger()?.error('Failed to clear storage:', error);
       return false;
     }
+  }
+
+  /**
+   * Lazy load LoggerService to avoid circular dependency
+   */
+  private getLogger() {
+    if (!this.logger) {
+      try {
+        // Dynamic import to break circular dependency
+        const { LoggerService } = require('./logger.service');
+        this.logger = inject(LoggerService);
+      } catch {
+        // If injection fails, return null
+        return null;
+      }
+    }
+    return this.logger;
   }
 
   /**
