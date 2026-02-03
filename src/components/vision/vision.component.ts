@@ -21,6 +21,7 @@ export class VisionComponent implements OnInit, OnDestroy {
   isCameraActive = false;
   cameraPermissionError = signal<string | null>(null);
   cameraStatusMessage = signal<string | null>(null);
+  private appStateListener: { remove: () => void } | null = null;
 
   // Ambient instability
   brightnessFluctuation = signal<number>(0);
@@ -44,18 +45,23 @@ export class VisionComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.startCamera();
     this.startAmbientInstability();
-    this.anomalyService.start(); // Start camera analysis and anomaly detection
-    App.addListener('appStateChange', ({ isActive }) => {
+    this.anomalyService.start();
+    
+    this.appStateListener = App.addListener('appStateChange', ({ isActive }) => {
       if (isActive && this.cameraPermissionError() && !this.isCameraActive) {
         this.startCamera();
       }
-    });
+    }) as unknown as { remove: () => void };
   }
 
   ngOnDestroy() {
     this.stopCamera();
     this.stopAmbientInstability();
     this.anomalyService.stop();
+    
+    if (this.appStateListener) {
+      this.appStateListener.remove();
+    }
   }
 
   async startCamera() {
