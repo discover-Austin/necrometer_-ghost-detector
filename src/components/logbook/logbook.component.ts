@@ -10,8 +10,6 @@ import { AnomalyEvent } from '../../services/anomaly-detection.service';
 })
 export class LogbookComponent {
   @Input() anomalyEvents: AnomalyEvent[] = [];
-  @Input() isLoading: boolean = false;
-  @Input() error: string | null = null;
 
   selectedEvent = signal<AnomalyEvent | null>(null);
 
@@ -25,9 +23,5 @@ export class LogbookComponent {
 
   formatDuration(ms: number): string {
     return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
-  }
-
-  getEventClass(event: AnomalyEvent): string {
-    return 'border-spectral-500/50';
   }
 }

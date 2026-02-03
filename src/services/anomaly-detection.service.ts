@@ -1,6 +1,6 @@
-import { Injectable, signal, computed, inject, effect } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
 import { SensorService } from './sensor.service';
-import { AudioService } from './audio.service';
+import { CameraAnalysisService } from './camera-analysis.service';
 
 export interface AnomalyEvent {
   id: number;
@@ -8,164 +8,147 @@ export interface AnomalyEvent {
   type: 'blur' | 'shadow' | 'distortion' | 'edge-artifact';
   position: { x: number; y: number }; // percent coordinates (0-100)
   duration: number; // milliseconds
-  description: string;
+  intensity: number; // 0.18-0.42
+  note: string;
 }
-
-// Timing constants for acknowledgment
-export const ACKNOWLEDGMENT_DELAY_MIN = 500; // ms
-export const ACKNOWLEDGMENT_DELAY_MAX = 1200; // ms
 
 @Injectable({
   providedIn: 'root',
 })
 export class AnomalyDetectionService {
   private sensorService = inject(SensorService);
-  private audioService = inject(AudioService);
-
-  // Sensor baseline tracking
-  private magnetometerBaseline = signal<number[]>([]);
-  private motionBaseline = signal<number[]>([]);
-  private audioBaseline = signal<number[]>([]);
+  private cameraAnalysis = inject(CameraAnalysisService);
   
   // Anomaly state
   anomalyEvents = signal<AnomalyEvent[]>([]);
   currentAnomaly = signal<AnomalyEvent | null>(null);
-  lastAnomalyTime = signal<number>(0);
   
-  // Detection parameters
-  private readonly BASELINE_WINDOW = 10; // seconds
+  // Internal state for anomaly engine
+  private attentionLevel = 0.18;
+  private lastAnomalyTimestamp = 0;
+  private cooldownUntilTimestamp = 0;
+  
+  // Constants from problem statement
+  private readonly ATTENTION_INCREMENT = 0.004;
+  private readonly ATTENTION_MIN = 0.1;
+  private readonly ATTENTION_MAX = 1.0;
+  private readonly ATTENTION_THRESHOLD = 0.55;
+  private readonly ATTENTION_DROP = 0.65;
+  
   private readonly MIN_COOLDOWN = 90000; // 90 seconds
   private readonly MAX_COOLDOWN = 180000; // 180 seconds
-  private readonly VARIANCE_THRESHOLD = 1.5; // multiplier for variance detection
-  private readonly STILLNESS_THRESHOLD = 0.5; // threshold for user movement
   
-  // Random probability gate
-  private probabilityAccumulator = signal<number>(0);
-  private readonly PROBABILITY_INCREMENT = 0.01; // increases over time
+  private readonly STABILITY_THRESHOLD = 0.72;
+  private readonly DEVIATION_THRESHOLD = 2;
+  private readonly VISUAL_NOISE_MIN = 0.12;
+  private readonly VISUAL_NOISE_MAX = 0.45;
+  
+  private readonly ANOMALY_CHANCE_MULTIPLIER = 0.035;
+  
+  private readonly RENDER_DELAY_MIN = 220;
+  private readonly RENDER_DELAY_MAX = 680;
+  private readonly ACKNOWLEDGMENT_DELAY_MIN = 350;
+  private readonly ACKNOWLEDGMENT_DELAY_MAX = 650;
+  
+  private readonly DURATION_MIN = 700;
+  private readonly DURATION_MAX = 1100;
+  private readonly INTENSITY_MIN = 0.18;
+  private readonly INTENSITY_MAX = 0.42;
   
   private anomalyCheckInterval: any = null;
+  private lastAnomalyPosition: { x: number; y: number } | null = null;
 
   constructor() {
-    // Monitor sensors and update baselines
-    effect(() => {
-      const mag = this.sensorService.magnetometer();
-      if (mag !== null) {
-        this.updateBaseline(this.magnetometerBaseline, mag);
-      }
-    });
-
-    effect(() => {
-      const motion = this.sensorService.motion();
-      if (motion !== null) {
-        const magnitude = Math.sqrt(motion.x ** 2 + motion.y ** 2 + motion.z ** 2);
-        this.updateBaseline(this.motionBaseline, magnitude);
-      }
-    });
-
-    // Start anomaly detection loop
+    // Start anomaly detection loop - runs every 500ms
     this.startDetectionLoop();
   }
 
-  private updateBaseline(baseline: any, value: number) {
-    baseline.update((prev: number[]) => {
-      const updated = [...prev, value];
-      // Keep only last N seconds of data (assuming ~10 readings per second)
-      if (updated.length > this.BASELINE_WINDOW * 10) {
-        updated.shift();
-      }
-      return updated;
-    });
+  private startDetectionLoop() {
+    this.anomalyCheckInterval = setInterval(() => {
+      this.checkAndTriggerAnomaly();
+    }, 500); // 500ms as specified
   }
 
-  private getVariance(baseline: number[], currentValue: number): number {
-    if (baseline.length < 10) return 0; // Not enough data yet
-    
-    const average = baseline.reduce((a, b) => a + b, 0) / baseline.length;
-    const variance = Math.abs(currentValue - average) / (average || 1);
-    return variance;
-  }
-
-  private isUserStill(): boolean {
-    const motion = this.sensorService.motion();
-    if (!motion) return false;
-    
-    const magnitude = Math.sqrt(motion.x ** 2 + motion.y ** 2 + motion.z ** 2);
-    return magnitude < this.STILLNESS_THRESHOLD;
-  }
-
-  private checkAnomalyConditions(): boolean {
+  private checkAndTriggerAnomaly() {
     const now = Date.now();
-    const timeSinceLastAnomaly = now - this.lastAnomalyTime();
+    
+    // Increment attention level every tick
+    this.attentionLevel = Math.min(
+      this.ATTENTION_MAX,
+      this.attentionLevel + this.ATTENTION_INCREMENT
+    );
     
     // Gate 1: Cooldown period
-    const cooldownPeriod = this.MIN_COOLDOWN + Math.random() * (this.MAX_COOLDOWN - this.MIN_COOLDOWN);
-    if (timeSinceLastAnomaly < cooldownPeriod) {
-      return false;
+    if (now < this.cooldownUntilTimestamp) {
+      return;
     }
-
-    // Gate 2: At least two sensors showing elevated variance
-    let elevatedSensorCount = 0;
     
-    const mag = this.sensorService.magnetometer();
-    if (mag !== null) {
-      const magVariance = this.getVariance(this.magnetometerBaseline(), mag);
-      if (magVariance > this.VARIANCE_THRESHOLD) elevatedSensorCount++;
+    // Gate 2: Attention level
+    if (this.attentionLevel < this.ATTENTION_THRESHOLD) {
+      return;
     }
-
-    const motion = this.sensorService.motion();
-    if (motion !== null) {
-      const magnitude = Math.sqrt(motion.x ** 2 + motion.y ** 2 + motion.z ** 2);
-      const motionVariance = this.getVariance(this.motionBaseline(), magnitude);
-      if (motionVariance > this.VARIANCE_THRESHOLD) elevatedSensorCount++;
-    }
-
-    if (elevatedSensorCount < 2) {
-      return false;
-    }
-
-    // Gate 3: User is relatively still
-    if (!this.isUserStill()) {
-      return false;
-    }
-
-    // Gate 4: Random probability gate
-    this.probabilityAccumulator.update(p => Math.min(p + this.PROBABILITY_INCREMENT, 1.0));
-    const shouldTrigger = Math.random() < this.probabilityAccumulator();
     
-    if (shouldTrigger) {
-      this.probabilityAccumulator.set(0); // Reset probability
-      return true;
+    // Gate 3: Stability score
+    const stability = this.sensorService.stabilityScore();
+    if (stability < this.STABILITY_THRESHOLD) {
+      return;
     }
-
-    return false;
-  }
-
-  private startDetectionLoop() {
-    // Check for anomaly conditions every 5 seconds
-    this.anomalyCheckInterval = setInterval(() => {
-      if (this.checkAnomalyConditions()) {
-        this.triggerAnomaly();
-      }
-    }, 5000);
+    
+    // Gate 4: Deviation count
+    const deviationCount = this.sensorService.deviationCount();
+    if (deviationCount < this.DEVIATION_THRESHOLD) {
+      return;
+    }
+    
+    // Gate 5: Visual noise score
+    const visualNoise = this.cameraAnalysis.visualNoiseScore();
+    if (visualNoise < this.VISUAL_NOISE_MIN || visualNoise > this.VISUAL_NOISE_MAX) {
+      return;
+    }
+    
+    // Random gate
+    const anomalyChance = this.attentionLevel * this.ANOMALY_CHANCE_MULTIPLIER;
+    if (Math.random() > anomalyChance) {
+      return;
+    }
+    
+    // All gates passed - trigger anomaly
+    this.triggerAnomaly();
   }
 
   private triggerAnomaly() {
     const types: AnomalyEvent['type'][] = ['blur', 'shadow', 'distortion', 'edge-artifact'];
     const type = types[Math.floor(Math.random() * types.length)];
     
-    // Random off-center position
-    const x = 20 + Math.random() * 60; // 20-80% range
-    const y = 20 + Math.random() * 60;
+    // Random off-center position, never same region twice, never centered
+    let x, y;
+    do {
+      // Position between 20-80% to avoid edges
+      x = 20 + Math.random() * 60;
+      y = 20 + Math.random() * 60;
+    } while (
+      // Avoid repeating same region
+      (this.lastAnomalyPosition && 
+       Math.abs(x - this.lastAnomalyPosition.x) < 20 &&
+       Math.abs(y - this.lastAnomalyPosition.y) < 20) ||
+      // Avoid center area (40-60%)
+      (x >= 40 && x <= 60 && y >= 40 && y <= 60)
+    );
     
-    // Random duration between 300-1200ms
-    const duration = 300 + Math.random() * 900;
+    this.lastAnomalyPosition = { x, y };
     
-    const descriptions = [
-      'Unclassified visual irregularity observed',
-      'Anomalous pattern flagged',
-      'Irregularity detected and resolved',
-      'Visual distortion logged',
-      'Transient anomaly recorded',
+    // Random duration and intensity from spec
+    const duration = this.DURATION_MIN + Math.random() * (this.DURATION_MAX - this.DURATION_MIN);
+    const intensity = this.INTENSITY_MIN + Math.random() * (this.INTENSITY_MAX - this.INTENSITY_MIN);
+    
+    // Passive, uncertain language
+    const notes = [
+      'Transient distortion observed. Pattern degraded prior to stabilization.',
+      'Visual irregularity noted. Resolution unclear.',
+      'Anomalous signature recorded. Source inconclusive.',
+      'Brief instability logged. Characteristics ambiguous.',
+      'Unclassified variance detected. Analysis pending.',
+      'Optical inconsistency flagged. Origin indeterminate.',
     ];
     
     const anomaly: AnomalyEvent = {
@@ -174,29 +157,57 @@ export class AnomalyDetectionService {
       type,
       position: { x, y },
       duration,
-      description: descriptions[Math.floor(Math.random() * descriptions.length)],
+      intensity,
+      note: notes[Math.floor(Math.random() * notes.length)],
     };
 
-    // Show the anomaly
-    this.currentAnomaly.set(anomaly);
-    this.lastAnomalyTime.set(Date.now());
-
-    // Hide the anomaly after its duration
+    // Wait before rendering (220-680ms)
+    const renderDelay = this.RENDER_DELAY_MIN + 
+      Math.random() * (this.RENDER_DELAY_MAX - this.RENDER_DELAY_MIN);
+    
     setTimeout(() => {
-      this.currentAnomaly.set(null);
+      // Show the anomaly
+      this.currentAnomaly.set(anomaly);
       
-      // After a delay, acknowledge it and add to log
-      const acknowledgmentDelay = ACKNOWLEDGMENT_DELAY_MIN + 
-        Math.random() * (ACKNOWLEDGMENT_DELAY_MAX - ACKNOWLEDGMENT_DELAY_MIN);
+      // Hide after duration
       setTimeout(() => {
-        this.anomalyEvents.update(events => [anomaly, ...events]);
-      }, acknowledgmentDelay);
-    }, duration);
+        this.currentAnomaly.set(null);
+        
+        // Wait additional time before acknowledgment
+        const ackDelay = this.ACKNOWLEDGMENT_DELAY_MIN + 
+          Math.random() * (this.ACKNOWLEDGMENT_DELAY_MAX - this.ACKNOWLEDGMENT_DELAY_MIN);
+        
+        setTimeout(() => {
+          // Acknowledge: drop attention, start cooldown, log
+          this.attentionLevel = Math.max(
+            this.ATTENTION_MIN,
+            this.attentionLevel - this.ATTENTION_DROP
+          );
+          
+          const cooldownDuration = this.MIN_COOLDOWN + 
+            Math.random() * (this.MAX_COOLDOWN - this.MIN_COOLDOWN);
+          this.cooldownUntilTimestamp = Date.now() + cooldownDuration;
+          
+          this.lastAnomalyTimestamp = Date.now();
+          
+          // Add to log
+          this.anomalyEvents.update(events => [anomaly, ...events]);
+        }, ackDelay);
+      }, duration);
+    }, renderDelay);
   }
 
   stop() {
     if (this.anomalyCheckInterval) {
       clearInterval(this.anomalyCheckInterval);
+    }
+    this.cameraAnalysis.stopAnalysis();
+  }
+  
+  start() {
+    this.cameraAnalysis.startAnalysis();
+    if (!this.anomalyCheckInterval) {
+      this.startDetectionLoop();
     }
   }
 }

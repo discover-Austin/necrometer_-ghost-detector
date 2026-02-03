@@ -1,19 +1,15 @@
-import { Component, ChangeDetectionStrategy, signal, inject, AfterViewInit, OnDestroy, computed, effect, ViewChild, ElementRef, Renderer2 } from '@angular/core';
+import { Component, ChangeDetectionStrategy, signal, inject, AfterViewInit, OnDestroy, effect, ViewChild, ElementRef } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { LogbookComponent } from './components/logbook/logbook.component';
 import { VisionComponent } from './components/vision/vision.component';
-import { UpgradeComponent } from './components/upgrade/upgrade.component';
 import { ToastComponent } from './components/toast/toast.component';
 import { DeviceStateService } from './services/device-state.service';
 import { SplashScreen } from '@capacitor/splash-screen';
-import { UpgradeService } from './services/upgrade.service';
 import { AudioService } from './services/audio.service';
-import { PersistenceService } from './services/persistence.service';
 import { SensorService } from './services/sensor.service';
 import { AnomalyDetectionService } from './services/anomaly-detection.service';
-import { App } from '@capacitor/app';
 
-type View = 'vision' | 'logbook' | 'store';
+type View = 'vision' | 'logbook';
 
 @Component({
   selector: 'app-root',
@@ -23,22 +19,14 @@ type View = 'vision' | 'logbook' | 'store';
     CommonModule,
     LogbookComponent,
     VisionComponent,
-    UpgradeComponent,
     ToastComponent,
   ],
-  host: {
-    '[class.pro-theme]': 'upgradeService.isPro()',
-  }
 })
 export class AppComponent implements AfterViewInit, OnDestroy {
-  private persistenceService = inject(PersistenceService);
   activeView = signal<View>('vision');
   activeViewIndex = signal(0);
-  isLoading = signal(false);
-  error = signal<string | null>(null);
 
   deviceState = inject(DeviceStateService);
-  upgradeService = inject(UpgradeService);
   audioService = inject(AudioService);
   private sensorService = inject(SensorService);
   anomalyService = inject(AnomalyDetectionService);
@@ -47,10 +35,14 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   @ViewChild('mainContent') mainContentRef!: ElementRef<HTMLElement>;
 
   constructor() {
+    // Track new anomaly events for badge
     effect(() => {
-      this.audioService.updateStaticLevel(this.deviceState.emfReading());
+      const events = this.anomalyService.anomalyEvents();
+      if (events.length > 0 && this.activeView() !== 'logbook') {
+        this.hasNewDetections.set(true);
+      }
     });
-
+    
     // Animate view changes
     effect(() => {
       this.activeView(); // depend on activeView
@@ -80,38 +72,20 @@ export class AppComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  changeView(view: View, index: number) {
-    this.initializeAudio();
-    this.audioService.playUISound();
-    this.activeView.set(view);
-    this.activeViewIndex.set(index);
-  }
-
   hasNewDetections = signal(false);
 
-  trackNewDetection() {
-    if (this.activeView() !== 'logbook') {
-      this.hasNewDetections.set(true);
-    }
-  }
-
-  viewLogbook(index: number) {
+  viewLogbook() {
     this.initializeAudio();
     this.audioService.playUISound();
-    this.changeView('logbook', index);
+    this.activeView.set('logbook');
+    this.activeViewIndex.set(1);
     this.hasNewDetections.set(false);
   }
 
-  // Global visual effects driven by EMF reading
-  globalStaticOpacity = computed(() => {
-    const reading = this.deviceState.emfReading();
-    if (reading < 20) return 0;
-    return Math.min((reading / 100) * 0.4, 0.4);
-  });
-
-  globalNoiseOpacity = computed(() => {
-    const reading = this.deviceState.emfReading();
-    if (reading < 40) return 0;
-    return Math.min(((reading - 40) / 60) * 0.15, 0.15);
-  });
+  viewScanner() {
+    this.initializeAudio();
+    this.audioService.playUISound();
+    this.activeView.set('vision');
+    this.activeViewIndex.set(0);
+  }
 }

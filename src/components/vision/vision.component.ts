@@ -1,9 +1,9 @@
-import { Component, ChangeDetectionStrategy, inject, signal, effect, OnDestroy, OnInit, Input } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, effect, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
 import { CameraPreview } from '@capacitor-community/camera-preview';
 import { App } from '@capacitor/app';
-import { AnomalyDetectionService, AnomalyEvent, ACKNOWLEDGMENT_DELAY_MIN, ACKNOWLEDGMENT_DELAY_MAX } from '../../services/anomaly-detection.service';
+import { AnomalyDetectionService, AnomalyEvent } from '../../services/anomaly-detection.service';
 
 @Component({
   selector: 'app-vision',
@@ -28,8 +28,6 @@ export class VisionComponent implements OnInit, OnDestroy {
   
   // Anomaly display
   currentAnomaly = signal<AnomalyEvent | null>(null);
-  showAcknowledgment = signal<boolean>(false);
-  acknowledgmentText = signal<string>('');
 
   private animationFrameId: number | null = null;
   private instabilityTime = 0;
@@ -39,31 +37,13 @@ export class VisionComponent implements OnInit, OnDestroy {
     effect(() => {
       const anomaly = this.anomalyService.currentAnomaly();
       this.currentAnomaly.set(anomaly);
-      
-      // If an anomaly is showing, schedule acknowledgment after it disappears
-      if (anomaly) {
-        const anomalyDuration = anomaly.duration;
-        const acknowledgmentDelay = ACKNOWLEDGMENT_DELAY_MIN + 
-          Math.random() * (ACKNOWLEDGMENT_DELAY_MAX - ACKNOWLEDGMENT_DELAY_MIN);
-        
-        setTimeout(() => {
-          // Show acknowledgment
-          this.acknowledgmentText.set(anomaly.description);
-          this.showAcknowledgment.set(true);
-          
-          // Hide acknowledgment after 3 seconds
-          setTimeout(() => {
-            this.showAcknowledgment.set(false);
-            this.acknowledgmentText.set('');
-          }, 3000);
-        }, anomalyDuration + acknowledgmentDelay);
-      }
     });
   }
 
   ngOnInit() {
     this.startCamera();
     this.startAmbientInstability();
+    this.anomalyService.start(); // Start camera analysis and anomaly detection
     this.appStateListener = App.addListener('appStateChange', ({ isActive }) => {
       if (isActive && this.cameraPermissionError() && !this.isCameraActive) {
         this.startCamera();
