@@ -5,89 +5,144 @@
   background-color: transparent;
 }
 
-.ar-entity {
+/* Anomaly Manifestations */
+.anomaly-container {
   position: absolute;
-  width: 60px;
-  height: 80px;
-  will-change: transform, opacity;
-  transition: opacity 0.5s;
+  width: 120px;
+  height: 120px;
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  will-change: opacity;
 }
 
-.ghost-figure {
+.anomaly-fade-in {
+  animation: anomalyFadeIn 300ms ease-out forwards,
+             anomalyFadeOut 300ms ease-in 900ms forwards;
+}
+
+@keyframes anomalyFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes anomalyFadeOut {
+  from { opacity: 1; }
+  to { opacity: 0; }
+}
+
+/* Blur Anomaly - localized blur that moves */
+.anomaly-blur {
   width: 100%;
   height: 100%;
-  filter: drop-shadow(0 0 10px rgba(13, 227, 255, 0.7)) blur(1.5px);
-  animation: float 6s ease-in-out infinite;
-  transform-origin: bottom center;
+  background: radial-gradient(circle, rgba(100, 100, 150, 0.3) 0%, transparent 70%);
+  filter: blur(12px);
+  animation: anomalyDrift 1200ms ease-in-out;
 }
 
-.ar-entity.targeted .ghost-figure {
-  filter: drop-shadow(0 0 15px rgb(255, 17, 0)) blur(1px);
+@keyframes anomalyDrift {
+  0%, 100% { transform: translate(0, 0); }
+  25% { transform: translate(10px, -5px); }
+  50% { transform: translate(-5px, 8px); }
+  75% { transform: translate(8px, 3px); }
 }
 
-.ghost-head {
-  width: 60%;
-  height: 45%;
-  background: radial-gradient(circle, rgba(255,255,255,0.8) 0%, rgba(200,240,255,0.5) 70%);
-  border-radius: 50% 50% 40% 40% / 60% 60% 40% 40%;
-  position: relative;
-  left: 20%;
+/* Shadow Anomaly - brief shadow-like silhouette */
+.anomaly-shadow {
+  width: 80px;
+  height: 100px;
+  background: linear-gradient(180deg, 
+    rgba(0, 0, 0, 0) 0%,
+    rgba(20, 20, 40, 0.6) 20%,
+    rgba(10, 10, 30, 0.5) 50%,
+    rgba(0, 0, 0, 0) 100%);
+  filter: blur(8px);
+  animation: anomalyShadowFlicker 1200ms ease-in-out;
 }
 
-.ghost-body {
+@keyframes anomalyShadowFlicker {
+  0%, 100% { opacity: 0.3; }
+  10% { opacity: 0.7; }
+  20% { opacity: 0.4; }
+  30% { opacity: 0.8; }
+  50% { opacity: 0.5; }
+  80% { opacity: 0.6; }
+}
+
+/* Distortion Anomaly - ripple that lags camera motion */
+.anomaly-distortion {
   width: 100%;
-  height: 55%;
-  background: linear-gradient(to bottom, rgba(200,240,255,0.5), rgba(150,220,255,0.2));
-  border-radius: 40% 40% 0 0;
-  position: absolute;
-  top: 30%;
-}
-
-.ghost-tail {
-  position: absolute;
-  bottom: -10px;
-  left: 0;
-  width: 100%;
-  height: 20px;
-  background: rgba(150,220,255,0.2);
-  border-radius: 0 0 50% 50%;
+  height: 100%;
+  background: repeating-radial-gradient(
+    circle at center,
+    transparent 0px,
+    rgba(150, 150, 200, 0.2) 15px,
+    transparent 30px
+  );
   filter: blur(3px);
-  animation: tail-sway 3s ease-in-out infinite;
+  animation: anomalyRipple 1200ms ease-out;
 }
 
-@keyframes float {
-  0%, 100% { transform: translateY(0) rotate(-2deg); }
-  50% { transform: translateY(-15px) rotate(2deg); }
+@keyframes anomalyRipple {
+  0% { 
+    transform: scale(0.5);
+    opacity: 0.8;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.4;
+  }
+  100% { 
+    transform: scale(2);
+    opacity: 0;
+  }
 }
 
-@keyframes tail-sway {
-  0%, 100% { transform: translateX(-5px) scaleX(0.9); }
-  50% { transform: translateX(5px) scaleX(1.1); }
+/* Edge Artifact - contradicts lighting at edges */
+.anomaly-edge-artifact {
+  width: 150px;
+  height: 150px;
+  background: linear-gradient(
+    135deg,
+    rgba(80, 80, 120, 0.4) 0%,
+    rgba(60, 60, 100, 0.3) 30%,
+    transparent 60%
+  );
+  filter: blur(6px);
+  animation: anomalyEdgeShift 1200ms ease-in-out;
+  transform-origin: top left;
 }
 
-/* Targeting Reticle */
-.targeting-reticle {
-  position: absolute;
-  top: -20%; left: -20%;
-  width: 140%;
-  height: 140%;
-  animation: spin 8s linear infinite;
+@keyframes anomalyEdgeShift {
+  0%, 100% { 
+    opacity: 0.3;
+    transform: translate(0, 0);
+  }
+  25% { 
+    opacity: 0.7;
+    transform: translate(-5px, 3px);
+  }
+  50% { 
+    opacity: 0.5;
+    transform: translate(3px, -5px);
+  }
+  75% { 
+    opacity: 0.6;
+    transform: translate(-2px, 5px);
+  }
 }
 
-.reticle-circle {
-  stroke: rgba(255, 0, 0, 0.7);
-  stroke-width: 2;
-  fill: none;
-  stroke-dasharray: 10 5;
-  animation: pulse-reticle 2s infinite ease-in-out;
+/* Acknowledgment pulse */
+.acknowledgment-pulse {
+  animation: acknowledgmentPulse 400ms ease-in-out;
 }
 
-@keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
-}
-
-@keyframes pulse-reticle {
-  0%, 100% { stroke-width: 2; opacity: 0.7; }
-  50% { stroke-width: 4; opacity: 1; }
+@keyframes acknowledgmentPulse {
+  0%, 100% { 
+    opacity: 0.7;
+    transform: scale(1);
+  }
+  50% { 
+    opacity: 1;
+    transform: scale(1.05);
+  }
 }

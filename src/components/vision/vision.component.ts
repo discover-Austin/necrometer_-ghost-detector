@@ -1,15 +1,9 @@
-import { Component, ChangeDetectionStrategy, inject, signal, effect, OnDestroy, OnInit, Input, OnChanges, SimpleChanges } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, signal, effect, OnDestroy, OnInit, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
-import { DetectedEntity, AREntity, SceneObject } from '../../types';
-import { SensorService } from '../../services/sensor.service';
-import { UpgradeService } from '../../services/upgrade.service';
-import { GeminiService } from '../../services/gemini.service';
 import { CameraPreview } from '@capacitor-community/camera-preview';
 import { App } from '@capacitor/app';
-import { PluginListenerHandle } from '@capacitor/core';
-import { AudioService } from '../../services/audio.service';
-import { findNearestAnchor, computeOcclusionLevel } from '../../utils/ar-utils';
+import { AnomalyDetectionService, AnomalyEvent, ACKNOWLEDGMENT_DELAY_MIN, ACKNOWLEDGMENT_DELAY_MAX } from '../../services/anomaly-detection.service';
 
 @Component({
   selector: 'app-vision',
@@ -18,48 +12,58 @@ import { findNearestAnchor, computeOcclusionLevel } from '../../utils/ar-utils';
   styleUrls: ['./vision.component.css'],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
-export class VisionComponent implements OnInit, OnDestroy, OnChanges {
-  @Input() detections!: DetectedEntity[];
+export class VisionComponent implements OnInit, OnDestroy {
   deviceState = inject(DeviceStateService);
-  private sensorService = inject(SensorService);
-  private upgradeService = inject(UpgradeService);
-  private geminiService = inject(GeminiService);
-  private audioService = inject(AudioService);
-
-  arEntities = signal<AREntity[]>([]);
-  targetedEntity = signal<AREntity | null>(null);
-  currentTime = signal(Date.now());
+  private anomalyService = inject(AnomalyDetectionService);
 
   isCameraActive = false;
   cameraPermissionError = signal<string | null>(null);
   cameraStatusMessage = signal<string | null>(null);
   private appStateListener: any | null = null;
 
-  isScanningEnvironment = signal(false);
-  scanError = signal<string | null>(null);
-  sceneObjects = signal<SceneObject[]>([]);
-  readonly scanCost = 5;
+  // Ambient instability
+  brightnessFluctuation = signal<number>(0);
+  noiseOpacity = signal<number>(0.03);
+  chromaticAberration = signal<number>(0);
+  
+  // Anomaly display
+  currentAnomaly = signal<AnomalyEvent | null>(null);
+  showAcknowledgment = signal<boolean>(false);
+  acknowledgmentText = signal<string>('');
 
   private animationFrameId: number | null = null;
-  private physics = {
-    gravityTilt: 0.00005,
-    downwardDrift: 0.00002,
-    friction: 0.97,
-    emfAgitation: 0.00015,
-    maxSpeed: 0.2,
-    sceneRepulsion: 0.0001,
-    sceneRepulsionRadius: 12,
-  };
+  private instabilityTime = 0;
 
   constructor() {
+    // Subscribe to anomaly events
     effect(() => {
-      this.currentTime();
+      const anomaly = this.anomalyService.currentAnomaly();
+      this.currentAnomaly.set(anomaly);
+      
+      // If an anomaly is showing, schedule acknowledgment after it disappears
+      if (anomaly) {
+        const anomalyDuration = anomaly.duration;
+        const acknowledgmentDelay = ACKNOWLEDGMENT_DELAY_MIN + 
+          Math.random() * (ACKNOWLEDGMENT_DELAY_MAX - ACKNOWLEDGMENT_DELAY_MIN);
+        
+        setTimeout(() => {
+          // Show acknowledgment
+          this.acknowledgmentText.set(anomaly.description);
+          this.showAcknowledgment.set(true);
+          
+          // Hide acknowledgment after 3 seconds
+          setTimeout(() => {
+            this.showAcknowledgment.set(false);
+            this.acknowledgmentText.set('');
+          }, 3000);
+        }, anomalyDuration + acknowledgmentDelay);
+      }
     });
   }
 
   ngOnInit() {
     this.startCamera();
-    this.startAnimationLoop();
+    this.startAmbientInstability();
     this.appStateListener = App.addListener('appStateChange', ({ isActive }) => {
       if (isActive && this.cameraPermissionError() && !this.isCameraActive) {
         this.startCamera();
@@ -69,15 +73,10 @@ export class VisionComponent implements OnInit, OnDestroy, OnChanges {
 
   ngOnDestroy() {
     this.stopCamera();
-    this.stopAnimationLoop();
+    this.stopAmbientInstability();
+    this.anomalyService.stop();
     if (this.appStateListener) {
       this.appStateListener.remove();
-    }
-  }
-
-  ngOnChanges(changes: SimpleChanges) {
-    if (changes['detections']) {
-      this.syncDetectionsToAREntities();
     }
   }
 
@@ -127,137 +126,30 @@ export class VisionComponent implements OnInit, OnDestroy, OnChanges {
     }
   }
 
-  async scanEnvironment() {
-    if (this.isScanningEnvironment() || !this.isCameraActive) return;
-
-    if (!this.upgradeService.spendCredits(this.scanCost)) {
-      this.scanError.set(`Insufficient Credits. Requires ${this.scanCost} NC.`);
-      setTimeout(() => this.scanError.set(null), 4000);
-      return;
-    }
-
-    this.isScanningEnvironment.set(true);
-    this.scanError.set(null);
-    this.sceneObjects.set([]);
-
-    try {
-      const result = await CameraPreview.capture({ quality: 85 });
-      const base64Image = (result as any).value;
-      const analysisResult = await this.geminiService.analyzeScene(base64Image);
-      this.sceneObjects.set(analysisResult.objects);
-      setTimeout(() => this.sceneObjects.set([]), 15000);
-    } catch (err) {
-      console.error('Environment scan failed:', err);
-      const message = err instanceof Error ? err.message : String(err);
-      this.scanError.set(`Scene analysis failed: ${message}`);
-      this.upgradeService.addCredits(this.scanCost); // Refund on failure
-      setTimeout(() => this.scanError.set(null), 4000);
-    } finally {
-      this.isScanningEnvironment.set(false);
-    }
-  }
-
-  private syncDetectionsToAREntities() {
-    this.arEntities.update(currentEntities => {
-      const detectionMap = new Map(this.detections.map(d => [d.id, d]));
-      const newEntities = this.detections
-        .filter(d => !currentEntities.some(e => e.id === d.id))
-        .map(d => this.createAREntity(d));
-
-      return [
-        ...currentEntities.filter(e => detectionMap.has(e.id)),
-        ...newEntities
-      ];
-    });
-  }
-
-  private createAREntity(detection: DetectedEntity): AREntity {
-    return {
-      ...detection,
-      x: Math.random() * 90 + 5,
-      y: Math.random() * 90 + 5,
-      vx: (Math.random() - 0.5) * 0.05,
-      vy: (Math.random() - 0.5) * 0.05,
-      ax: 0,
-      ay: 0,
-    };
-  }
-
-  private startAnimationLoop() {
+  private startAmbientInstability() {
     const animate = () => {
-      this.updateAREntities();
+      this.instabilityTime += 0.016; // ~60fps
+      
+      // Subtle brightness fluctuation (±2-4%)
+      const brightnessCycle = Math.sin(this.instabilityTime * 0.5) * 0.02 + Math.sin(this.instabilityTime * 0.3) * 0.02;
+      this.brightnessFluctuation.set(brightnessCycle);
+      
+      // Light digital noise (varies slightly)
+      const noiseCycle = 0.03 + Math.sin(this.instabilityTime * 0.7) * 0.01;
+      this.noiseOpacity.set(noiseCycle);
+      
+      // Subtle chromatic aberration at edges
+      const aberrationCycle = Math.sin(this.instabilityTime * 0.4) * 0.5;
+      this.chromaticAberration.set(aberrationCycle);
+      
       this.animationFrameId = requestAnimationFrame(animate);
     };
     animate();
   }
 
-  private stopAnimationLoop() {
+  private stopAmbientInstability() {
     if (this.animationFrameId) {
       cancelAnimationFrame(this.animationFrameId);
     }
-  }
-
-  private updateAREntities() {
-    const orientation = this.sensorService.orientation();
-    const gravityX = orientation ? (orientation.gamma / 90) : 0;
-    const gravityY = orientation ? (Math.max(-90, Math.min(90, orientation.beta)) / 90) : 0;
-
-    this.arEntities.update(entities => {
-      let closestEntity: AREntity | null = null;
-      let minDistance = 15;
-
-      const updatedEntities = entities.map(e => {
-        let { x, y, vx, vy, ax, ay } = e;
-
-        if (e.contained) {
-          vx *= 0.9;
-          vy *= 0.9;
-          x += vx;
-          y += vy;
-          return { ...e, x, y, vx, vy };
-        }
-
-        ax = gravityX * this.physics.gravityTilt;
-        ay = gravityY * this.physics.gravityTilt + this.physics.downwardDrift;
-
-        const agitation = this.deviceState.emfReading() * this.physics.emfAgitation;
-        ax += (Math.random() - 0.5) * agitation;
-        ay += (Math.random() - 0.5) * agitation;
-
-        vx += ax;
-        vy += ay;
-        vx *= this.physics.friction;
-        vy *= this.physics.friction;
-
-        const speed = Math.sqrt(vx * vx + vy * vy);
-        if (speed > this.physics.maxSpeed) {
-          vx = (vx / speed) * this.physics.maxSpeed;
-          vy = (vy / speed) * this.physics.maxSpeed;
-        }
-
-        x += vx;
-        y += vy;
-
-        if (y > 105 || x < -5 || x > 105) {
-          x = Math.random() * 80 + 10;
-          y = -5;
-          vx = (Math.random() - 0.5) * 0.02;
-          vy = Math.random() * 0.05;
-        }
-
-        const updatedEntity = { ...e, x, y, vx, vy, ax, ay };
-
-        const distanceToCenter = Math.sqrt(Math.pow(updatedEntity.x - 50, 2) + Math.pow(updatedEntity.y - 45, 2));
-        if (distanceToCenter < minDistance) {
-          minDistance = distanceToCenter;
-          closestEntity = updatedEntity;
-        }
-
-        return updatedEntity;
-      });
-
-      this.targetedEntity.set(closestEntity);
-      return updatedEntities;
-    });
   }
 }
