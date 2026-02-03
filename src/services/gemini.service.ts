@@ -30,8 +30,8 @@ export class GeminiService {
 
     let key: string | undefined;
     try {
-      if (typeof process !== 'undefined' && (process as any).env && (process as any).env.API_KEY) {
-        key = (process as any).env.API_KEY;
+      if (typeof process !== 'undefined' && typeof (process as NodeJS.Process).env === 'object' && 'API_KEY' in (process as NodeJS.Process).env) {
+        key = (process as NodeJS.Process).env.API_KEY;
         this.logger.debug('API key loaded from process.env');
       }
     } catch (e) {
@@ -41,7 +41,7 @@ export class GeminiService {
     if (!key) {
       try {
         if (typeof window !== 'undefined') {
-          const w = window as any;
+          const w = window as Window & { __env?: { API_KEY?: string } };
           if (w && w.__env && w.__env.API_KEY) {
             key = w.__env.API_KEY;
             this.logger.debug('API key loaded from window.__env');

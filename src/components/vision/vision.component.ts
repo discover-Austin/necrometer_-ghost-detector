@@ -2,7 +2,7 @@ import { Component, ChangeDetectionStrategy, inject, signal, effect, OnDestroy, 
 import { CommonModule } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
 import { CameraPreview } from '@capacitor-community/camera-preview';
-import { App } from '@capacitor/app';
+import { App, PluginListenerHandle } from '@capacitor/app';
 import { AnomalyDetectionService, AnomalyEvent } from '../../services/anomaly-detection.service';
 
 @Component({
@@ -19,7 +19,7 @@ export class VisionComponent implements OnInit, OnDestroy {
   isCameraActive = false;
   cameraPermissionError = signal<string | null>(null);
   cameraStatusMessage = signal<string | null>(null);
-  private appStateListener: any | null = null;
+  private appStateListener: PluginListenerHandle | null = null;
 
   // Ambient instability
   brightnessFluctuation = signal<number>(0);

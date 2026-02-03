@@ -1,5 +1,15 @@
 import { Injectable, signal, computed } from '@angular/core';
 
+// Magnetometer type definition for Generic Sensor API
+interface Magnetometer extends EventTarget {
+  readonly x: number;
+  readonly y: number;
+  readonly z: number;
+  start(): void;
+  stop(): void;
+  addEventListener(type: string, listener: EventListenerOrEventListenerObject): void;
+}
+
 interface SensorHistory {
   current: number;
   shortTerm: number[]; // ~5 seconds of data
@@ -82,12 +92,12 @@ export class SensorService {
   });
 
   private hasPermissions = signal(false);
-  private updateInterval: any = null;
+  private updateInterval: ReturnType<typeof setInterval> | null = null;
 
   // Keep a reference to the magnetometer sensor so that we can
   // stop it later.  The type is loose because `Magnetometer` isn't
   // defined on the Window interface in TypeScript by default.
-  private magnetometerSensor: any;
+  private magnetometerSensor: Magnetometer | null = null;
 
   // Using arrow functions to preserve `this` context in event handlers
   private handleOrientation = (event: DeviceOrientationEvent) => {
@@ -119,7 +129,7 @@ export class SensorService {
     }
   };
 
-  private updateHistory(historySignal: any, value: number) {
+  private updateHistory(historySignal: ReturnType<typeof signal<SensorHistory>>, value: number) {
     historySignal.update((history: SensorHistory) => {
       const newShortTerm = [...history.shortTerm, value];
       const newLongTerm = [...history.longTerm, value];
@@ -188,8 +198,8 @@ export class SensorService {
           // Track magnetometer history
           this.updateHistory(this.magnetometerHistory, magnitude);
         });
-        this.magnetometerSensor.addEventListener('error', (event: any) => {
-          console.error('Magnetometer error:', event.error);
+        this.magnetometerSensor.addEventListener('error', (event: Event) => {
+          console.error('Magnetometer error:', (event as any).error);
         });
         this.magnetometerSensor.start();
       } catch (err) {

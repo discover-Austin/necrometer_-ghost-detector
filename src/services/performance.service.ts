@@ -192,8 +192,9 @@ export class PerformanceService {
       // First Input Delay
       new PerformanceObserver((list) => {
         const entries = list.getEntries();
-        entries.forEach((entry: any) => {
-          const fid = entry.processingStart - entry.startTime;
+        entries.forEach((entry: PerformanceEntry) => {
+          const fidEntry = entry as PerformanceEventTiming;
+          const fid = fidEntry.processingStart - fidEntry.startTime;
           this.logger.info('FID:', fid);
           this.analytics.trackEvent('web_vital', 'performance', {
             metric: 'FID',

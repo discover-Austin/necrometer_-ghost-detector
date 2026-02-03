@@ -2,8 +2,10 @@ import { Injectable, signal, effect, inject, computed } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { Schedule } from '../types';
 import { PersistenceService } from './persistence.service';
+
 // rrule is an optional dependency; load dynamically to avoid build-time failure when absent
-let rrulestr: any | undefined = undefined;
+type RRuleStr = (str: string) => { after: (date: Date, inc: boolean) => Date | null };
+let rrulestr: RRuleStr | undefined = undefined;
 try {
   // eslint-disable-next-line @typescript-eslint/no-var-requires, @typescript-eslint/no-require-imports
   const rrulePkg = require('rrule');
@@ -16,7 +18,7 @@ try {
 const SCHEDULES_STORAGE_KEY = 'necrometer_schedules_v1';
 
 interface InternalSchedule extends Schedule {
-  timerId?: any;
+  timerId?: ReturnType<typeof setTimeout>;
 }
 
 @Injectable({ providedIn: 'root' })

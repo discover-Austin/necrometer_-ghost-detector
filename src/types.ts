@@ -14,6 +14,17 @@ export interface DetectedEntity extends EntityProfile {
   emfReading: number;
 }
 
+// Schedule type for scheduler service
+export interface Schedule {
+  id: string;
+  name?: string;
+  enabled?: boolean;
+  rrule?: string;
+  intervalMs?: number;
+  lastRun?: string;
+  nextRun?: string;
+}
+
 // Note: AR, EVP, Temporal Echo, and Scene Analysis features have been removed
 // as part of the rebuild to focus on autonomous anomaly detection.
 // See anomaly-detection.service.ts for the new anomaly system.
