@@ -1,4 +1,5 @@
 import { Injectable, inject } from '@angular/core';
+import { LoggerService } from './logger.service';
 
 /**
  * Environment configuration service
@@ -8,7 +9,7 @@ import { Injectable, inject } from '@angular/core';
   providedIn: 'root'
 })
 export class EnvironmentService {
-  private logger?: any; // Late initialization to avoid circular dependency
+  private logger?: LoggerService; // Late initialization to avoid circular dependency
   private readonly STORAGE_KEY_PREFIX = 'necrometer.';
 
   /**

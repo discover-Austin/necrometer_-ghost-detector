@@ -202,7 +202,8 @@ export class SensorService {
           this.updateHistory(this.magnetometerHistory, magnitude);
         });
         this.magnetometerSensor.addEventListener('error', (event: Event) => {
-          this.logger.error('Magnetometer error:', (event as any).error);
+          const errorEvent = event as { error?: unknown };
+          this.logger.error('Magnetometer error:', errorEvent.error);
         });
         this.magnetometerSensor.start();
       } catch (err) {

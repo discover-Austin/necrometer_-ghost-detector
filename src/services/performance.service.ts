@@ -197,13 +197,16 @@ export class PerformanceService implements OnDestroy {
       const fidObserver = new PerformanceObserver((list) => {
         const entries = list.getEntries();
         entries.forEach((entry: PerformanceEntry) => {
-          const fidEntry = entry as PerformanceEventTiming;
-          const fid = fidEntry.processingStart - fidEntry.startTime;
-          this.logger.info('FID:', fid);
-          this.analytics.trackEvent('web_vital', 'performance', {
-            metric: 'FID',
-            value: fid
-          });
+          // Type guard: check if entry has processingStart property
+          if ('processingStart' in entry && 'startTime' in entry) {
+            const fidEntry = entry as PerformanceEventTiming;
+            const fid = fidEntry.processingStart - fidEntry.startTime;
+            this.logger.info('FID:', fid);
+            this.analytics.trackEvent('web_vital', 'performance', {
+              metric: 'FID',
+              value: fid
+            });
+          }
         });
       });
       fidObserver.observe({ entryTypes: ['first-input'] });
