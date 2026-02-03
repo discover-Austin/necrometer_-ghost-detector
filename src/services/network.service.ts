@@ -1,5 +1,5 @@
-import { Injectable, inject, signal } from '@angular/core';
-import { Network, ConnectionStatus } from '@capacitor/network';
+import { Injectable, inject, signal, OnDestroy } from '@angular/core';
+import { Network, ConnectionStatus, PluginListenerHandle } from '@capacitor/network';
 import { LoggerService } from './logger.service';
 import { ToastService } from './toast.service';
 
@@ -10,12 +10,15 @@ import { ToastService } from './toast.service';
 @Injectable({
   providedIn: 'root'
 })
-export class NetworkService {
+export class NetworkService implements OnDestroy {
   private logger = inject(LoggerService);
   private toast = inject(ToastService);
 
   isOnline = signal(true);
   connectionType = signal<string>('unknown');
+  private networkListener?: PluginListenerHandle;
+  private onlineListener?: () => void;
+  private offlineListener?: () => void;
 
   constructor() {
     this.init();
@@ -28,7 +31,7 @@ export class NetworkService {
       this.updateStatus(status);
 
       // Listen for network changes
-      Network.addListener('networkStatusChange', (status) => {
+      this.networkListener = await Network.addListener('networkStatusChange', (status) => {
         this.updateStatus(status);
       });
 
@@ -59,15 +62,35 @@ export class NetworkService {
     if (typeof window !== 'undefined' && 'onLine' in navigator) {
       this.isOnline.set(navigator.onLine);
 
-      window.addEventListener('online', () => {
+      this.onlineListener = () => {
         this.isOnline.set(true);
         this.toast.success('Connection restored');
-      });
-
-      window.addEventListener('offline', () => {
+      };
+      
+      this.offlineListener = () => {
         this.isOnline.set(false);
         this.toast.warning('You are offline');
-      });
+      };
+
+      window.addEventListener('online', this.onlineListener);
+      window.addEventListener('offline', this.offlineListener);
+    }
+  }
+
+  ngOnDestroy(): void {
+    // Remove Capacitor listener
+    if (this.networkListener) {
+      this.networkListener.remove();
+    }
+
+    // Remove browser listeners
+    if (typeof window !== 'undefined') {
+      if (this.onlineListener) {
+        window.removeEventListener('online', this.onlineListener);
+      }
+      if (this.offlineListener) {
+        window.removeEventListener('offline', this.offlineListener);
+      }
     }
   }
 
