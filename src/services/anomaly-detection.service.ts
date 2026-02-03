@@ -11,6 +11,10 @@ export interface AnomalyEvent {
   description: string;
 }
 
+// Timing constants for acknowledgment
+export const ACKNOWLEDGMENT_DELAY_MIN = 500; // ms
+export const ACKNOWLEDGMENT_DELAY_MAX = 1200; // ms
+
 @Injectable({
   providedIn: 'root',
 })
@@ -146,7 +150,7 @@ export class AnomalyDetectionService {
   }
 
   private triggerAnomaly() {
-    const types: AnomalyEvent['type'][] = ['blur', 'shadow', 'distortion'];
+    const types: AnomalyEvent['type'][] = ['blur', 'shadow', 'distortion', 'edge-artifact'];
     const type = types[Math.floor(Math.random() * types.length)];
     
     // Random off-center position
@@ -182,7 +186,8 @@ export class AnomalyDetectionService {
       this.currentAnomaly.set(null);
       
       // After a delay, acknowledge it and add to log
-      const acknowledgmentDelay = 500 + Math.random() * 700; // 500-1200ms
+      const acknowledgmentDelay = ACKNOWLEDGMENT_DELAY_MIN + 
+        Math.random() * (ACKNOWLEDGMENT_DELAY_MAX - ACKNOWLEDGMENT_DELAY_MIN);
       setTimeout(() => {
         this.anomalyEvents.update(events => [anomaly, ...events]);
       }, acknowledgmentDelay);

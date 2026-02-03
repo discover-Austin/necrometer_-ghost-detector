@@ -24,11 +24,7 @@ export class LogbookComponent {
   }
 
   formatDuration(ms: number): string {
-    if (ms < 1000) {
-      return `${ms}ms`;
-    } else {
-      return `${(ms / 1000).toFixed(1)}s`;
-    }
+    return ms < 1000 ? `${ms}ms` : `${(ms / 1000).toFixed(1)}s`;
   }
 
   getEventClass(event: AnomalyEvent): string {
