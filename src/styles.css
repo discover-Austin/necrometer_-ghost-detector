@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Font Imports (runtime loading; Chakra Petch primary, Inter secondary; avoid Google Fonts 403s in CI/CD by disabling inlining) */
+/* Font Imports (runtime loading; Chakra Petch primary, Inter secondary; inlining disabled in angular.json to avoid Google Fonts 403s in CI/CD) */
 @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;700&family=Share+Tech+Mono&family=Inter:wght@300;400;600&display=swap');
 
 html,
@@ -11,7 +11,7 @@ body,
 app-root {
   background-color: transparent !important;
   font-family: 'Chakra Petch', 'Inter', system-ui, -apple-system, BlinkMacSystemFont,
-    'Segoe UI', 'Roboto', 'Helvetica Neue', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+    'Segoe UI', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
