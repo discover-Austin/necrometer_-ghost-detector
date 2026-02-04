@@ -19,7 +19,7 @@ This app is **not** a real ghost detector. It is an **experiential scanner** des
 - Logs create meaning, not detection
 - If it feels "gamey," it's wrong
 
-## ✨ Core Features (Rebuilt)
+## ✨ Core Features (Rebuilt + Toolkit)
 
 ### Primary Interface
 - **📸 Visual Scanner**: Live camera feed with subtle ambient instability
@@ -27,6 +27,11 @@ This app is **not** a real ghost detector. It is an **experiential scanner** des
   - Light digital noise overlay
   - Subtle chromatic aberration at edges
   - Autonomous anomaly manifestation (no user triggers)
+- **🧭 Field Toolkit**: EMF graph + analog needle, spirit box word stream, audio spectrum, session controls
+- **📟 EMF Visualization**: Smoothed magnetometer values with peak tracking and radar overlay
+- **🧪 Session Recorder**: Timeline of EMF spikes, motion interference, and spirit box words
+- **🗂️ Export**: JSON session archive (credit/unlock gated)
+- **🧰 Settings**: Theme mode + permission status overview
 
 ### Anomaly Detection System
 - **🔍 Background Monitoring**: Continuous sensor analysis
@@ -57,6 +62,22 @@ This app is **not** a real ghost detector. It is an **experiential scanner** des
   - Duration estimate
   - Clinical, non-theatrical language
   - No raw sensor values exposed
+ - **📅 Session Timeline**: Summaries of recent sessions with peak EMF and word counts
+
+## 💸 Monetization Layers
+
+- **Free base**: Scanner, EMF graph, session logging, and logbook
+- **Credit unlocks**: Spirit box, audio analyzer, export logs, premium themes
+- **Pro tier**: Credits stipend + premium themes
+- **Optional sponsor unlocks**: Timed access for audio analyzer
+
+## 🧭 Architecture Overview
+
+See [`src/architecture.md`](src/architecture.md) for a module diagram of the sensor pipeline, toolkit UI, and monetization flow.
+
+## 🖼️ Screenshots
+
+- Field Toolkit View: ![Toolkit view](https://github.com/user-attachments/assets/7a8173f9-5240-4fb9-82c4-fe30128a2b1c)
 
 ## ❌ Removed Features
 
@@ -172,6 +193,12 @@ The following features have been intentionally removed:
 | `npm run open:ios` | Open project in Xcode |
 | `npm run cap:sync` | Sync all Capacitor platforms |
 | `npm test` | Run tests (coming soon) |
+
+## 🧰 Sensor Tuning
+
+- EMF smoothing: `DeviceStateService` low-pass filter (100ms tick)
+- Sensor variance gating: `SensorService.deviationCount()` (15% variance)
+- Spirit box gate: `SpiritBoxService` (EMF variance + cooldown)
 
 ## 🏗️ Project Structure
 

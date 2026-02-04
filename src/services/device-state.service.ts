@@ -7,6 +7,10 @@ import { SensorService } from './sensor.service';
 export class DeviceStateService implements OnDestroy {
   private sensorService = inject(SensorService);
   emfReading = signal(0);
+  emfHistory = signal<number[]>([]);
+  highestEmf = signal(0);
+  meterRotation = signal(0);
+  emfAvailable = signal(true);
 
   // Latest magnetometer magnitude (µT) reported by SensorService.magnetometer().
   private latestMagnetometer = 0;
@@ -27,6 +31,7 @@ export class DeviceStateService implements OnDestroy {
     // reading.
     effect(() => {
       const mag = this.sensorService.magnetometer();
+      this.emfAvailable.set(this.sensorService.magnetometerSupported());
       if (mag != null) {
         this.latestMagnetometer = mag;
         if (this.baselineMagnetometer == null) {
@@ -66,8 +71,29 @@ export class DeviceStateService implements OnDestroy {
       // noise scales with target: more agitation when target is high
       const noise = (Math.random() - 0.5) * (0.3 + 0.05 * target);
       const value = smoothed + noise;
-      return value < 0 ? 0 : value;
+      const clamped = value < 0 ? 0 : value;
+      this.trackEmfHistory(clamped);
+      this.updateMeter(clamped);
+      return clamped;
     });
+  }
+
+  private trackEmfHistory(value: number): void {
+    this.emfHistory.update(history => {
+      const next = [...history, value];
+      if (next.length > 120) {
+        next.shift();
+      }
+      return next;
+    });
+    if (value > this.highestEmf()) {
+      this.highestEmf.set(value);
+    }
+  }
+
+  private updateMeter(value: number): void {
+    const rotation = -60 + (value / 100) * 120;
+    this.meterRotation.set(rotation);
   }
 
   ngOnDestroy(): void {

@@ -5,6 +5,93 @@
   background-color: transparent;
 }
 
+.radar-ring {
+  position: absolute;
+  width: 140px;
+  height: 140px;
+  border-radius: 50%;
+  border: 1px solid rgba(34, 211, 238, 0.2);
+  box-shadow: 0 0 20px rgba(34, 211, 238, 0.15);
+  animation: radarPulse 4s ease-in-out infinite;
+}
+
+.radar-ring--mid {
+  width: 220px;
+  height: 220px;
+  animation-delay: 1s;
+}
+
+.radar-ring--outer {
+  width: 320px;
+  height: 320px;
+  animation-delay: 2s;
+}
+
+.radar-sweep {
+  position: absolute;
+  width: 260px;
+  height: 260px;
+  border-radius: 50%;
+  background: conic-gradient(from 180deg, rgba(34, 211, 238, 0.0), rgba(34, 211, 238, 0.4), rgba(34, 211, 238, 0.0));
+  animation: radarSweep 6s linear infinite;
+  filter: blur(2px);
+}
+
+.emf-meter {
+  width: 140px;
+  height: 80px;
+  position: relative;
+  border-top-left-radius: 140px;
+  border-top-right-radius: 140px;
+  border: 1px solid rgba(34, 211, 238, 0.4);
+  border-bottom: 0;
+  background: rgba(0, 0, 0, 0.45);
+  padding-top: 20px;
+}
+
+.emf-needle {
+  position: absolute;
+  left: 50%;
+  bottom: 10px;
+  width: 2px;
+  height: 55px;
+  background: rgba(16, 185, 129, 0.9);
+  transform-origin: bottom center;
+  transition: transform 0.2s ease-out;
+}
+
+.emf-readout {
+  position: absolute;
+  bottom: 6px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  font-size: 0.65rem;
+  color: rgba(148, 163, 184, 0.9);
+  font-family: 'Share Tech Mono', monospace;
+}
+
+@keyframes radarPulse {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.98);
+  }
+  50% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+@keyframes radarSweep {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
 /* Anomaly Manifestations */
 .anomaly-container {
   position: absolute;

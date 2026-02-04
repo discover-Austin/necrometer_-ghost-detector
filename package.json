@@ -11,7 +11,7 @@
     "sync:ios": "npx cap sync ios",
     "open:ios": "npx cap open ios",
     "cap:sync": "npx cap sync",
-    "lint": "npx -p @angular/cli@^20 ng lint",
+    "lint": "npx eslint \"src/**/*.ts\"",
     "test": "echo \"Tests coming soon\" && exit 0"
   },
   "dependencies": {
@@ -41,6 +41,7 @@
   "devDependencies": {
     "@angular-devkit/build-angular": "^20.3.6",
     "@capacitor/cli": "^7.4.3",
+    "@eslint/js": "^9.39.2",
     "@types/node": "^25.2.0",
     "@typescript-eslint/eslint-plugin": "^8.0.0",
     "@typescript-eslint/parser": "^8.0.0",

@@ -1,11 +1,13 @@
 import { Component, ChangeDetectionStrategy, inject, signal, effect, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
+import { SensorService } from '../../services/sensor.service';
 import { CameraPreview } from '@capacitor-community/camera-preview';
 import { App } from '@capacitor/app';
-import { PluginListenerHandle } from '@capacitor/core';
 import { AnomalyDetectionService, AnomalyEvent } from '../../services/anomaly-detection.service';
 import { LoggerService } from '../../services/logger.service';
+import { PermissionService } from '../../services/permission.service';
+import { AudioService } from '../../services/audio.service';
 
 @Component({
   selector: 'app-vision',
@@ -16,8 +18,11 @@ import { LoggerService } from '../../services/logger.service';
 })
 export class VisionComponent implements OnInit, OnDestroy {
   deviceState = inject(DeviceStateService);
+  sensorService = inject(SensorService);
   private anomalyService = inject(AnomalyDetectionService);
   private logger = inject(LoggerService);
+  private permissionService = inject(PermissionService);
+  private audioService = inject(AudioService);
 
   isCameraActive = false;
   cameraPermissionError = signal<string | null>(null);
@@ -47,6 +52,7 @@ export class VisionComponent implements OnInit, OnDestroy {
     this.startCamera();
     this.startAmbientInstability();
     this.anomalyService.start();
+    this.permissionService.updateSensors(this.deviceState.emfAvailable() ? 'granted' : 'denied');
     
     // Setup app state listener
     try {
@@ -90,6 +96,7 @@ export class VisionComponent implements OnInit, OnDestroy {
       this.isCameraActive = true;
       this.cameraPermissionError.set(null);
       this.cameraStatusMessage.set(null);
+      this.permissionService.updateCamera('granted');
     } catch (e) {
       this.handleCameraError(e);
     }
@@ -112,13 +119,16 @@ export class VisionComponent implements OnInit, OnDestroy {
     this.cameraStatusMessage.set(null);
     if (errorMessage.toLowerCase().includes('permission')) {
       this.cameraPermissionError.set("Camera permission denied. Please enable camera access in your device settings.");
+      this.permissionService.updateCamera('denied');
       return;
     }
     if (errorMessage.toLowerCase().includes('not found') || errorMessage.toLowerCase().includes('requested device not found')) {
       this.cameraPermissionError.set('Camera preview not supported on this device.');
+      this.permissionService.updateCamera('denied');
       return;
     } else {
       this.cameraPermissionError.set(`Failed to start the camera: ${errorMessage}`);
+      this.permissionService.updateCamera('denied');
     }
   }
 
@@ -137,6 +147,7 @@ export class VisionComponent implements OnInit, OnDestroy {
       // Subtle chromatic aberration at edges
       const aberrationCycle = Math.sin(this.instabilityTime * 0.4) * 0.5;
       this.chromaticAberration.set(aberrationCycle);
+      this.audioService.updateStaticLevel(this.deviceState.emfReading());
       
       this.animationFrameId = requestAnimationFrame(animate);
     };
