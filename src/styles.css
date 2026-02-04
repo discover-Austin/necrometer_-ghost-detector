@@ -11,6 +11,8 @@ body,
 app-root {
   background-color: transparent !important;
   font-family: 'Chakra Petch', 'Inter', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
   height: 100%;
   /* Prevent scrolling on main body */
