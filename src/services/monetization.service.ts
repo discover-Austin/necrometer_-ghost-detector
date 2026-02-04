@@ -26,7 +26,7 @@ export class MonetizationService {
   private readonly storageKey = 'monetization';
 
   unlockedFeatures = signal<FeatureKey[]>([]);
-  private temporaryUnlocks = signal<Record<FeatureKey, number>>({});
+  private temporaryUnlocks = signal<Partial<Record<FeatureKey, number>>>({});
   featureCosts = FEATURE_COSTS;
 
   adsEnabled = computed(() => !this.upgrade.isPro());
@@ -97,7 +97,7 @@ export class MonetizationService {
       if (Array.isArray(state.unlockedFeatures)) {
         this.unlockedFeatures.set(state.unlockedFeatures);
       }
-    } catch (error) {
+    } catch {
       this.toast.warning('Failed to load monetization state.');
     }
   }

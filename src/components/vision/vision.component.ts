@@ -4,7 +4,6 @@ import { DeviceStateService } from '../../services/device-state.service';
 import { SensorService } from '../../services/sensor.service';
 import { CameraPreview } from '@capacitor-community/camera-preview';
 import { App } from '@capacitor/app';
-import { PluginListenerHandle } from '@capacitor/core';
 import { AnomalyDetectionService, AnomalyEvent } from '../../services/anomaly-detection.service';
 import { LoggerService } from '../../services/logger.service';
 import { PermissionService } from '../../services/permission.service';

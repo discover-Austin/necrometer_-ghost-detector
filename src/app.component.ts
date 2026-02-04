@@ -42,7 +42,7 @@ export class AppComponent implements AfterViewInit, OnDestroy {
   anomalyService = inject(AnomalyDetectionService);
   private logger = inject(LoggerService);
   private toast = inject(ToastService);
-  private permissionService = inject(PermissionService);
+  permissionService = inject(PermissionService);
   upgradeService = inject(UpgradeService);
   private isAudioInitialized = false;
 

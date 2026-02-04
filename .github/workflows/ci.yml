@@ -48,12 +48,10 @@ jobs:
       - name: TypeScript check
         run: npx tsc --noEmit
 
-      # Optional: add ESLint step if you enable linting in the project
-      #- name: Run ESLint
-      #  run: npx eslint "src/**/*.{ts,js,tsx,jsx}" || true
+      - name: Run ESLint
+        run: npm run lint
 
       - name: Run Angular build
         env:
           CI: true
         run: npm run build --silent
-

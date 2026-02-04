@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, output } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { UpgradeService } from '../../services/upgrade.service';
 import { MonetizationService, FeatureKey } from '../../services/monetization.service';
