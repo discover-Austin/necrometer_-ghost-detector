@@ -10,7 +10,7 @@ html,
 body,
 app-root {
   background-color: transparent !important;
-  font-family: 'Chakra Petch', 'Inter', 'Share Tech Mono', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow: hidden;
