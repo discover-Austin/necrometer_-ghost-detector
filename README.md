@@ -297,6 +297,7 @@ You can also configure the API key at runtime:
 - Ensure Node.js version is 18 or higher
 - Clear node_modules and reinstall: `rm -rf node_modules && npm install`
 - Clear Angular cache: `rm -rf .angular`
+- Production builds disable font inlining in `angular.json` to avoid 403 errors from Google Fonts.
 
 ## 📄 License
 
