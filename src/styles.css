@@ -10,7 +10,7 @@ html,
 body,
 app-root {
   background-color: transparent !important;
-  font-family: 'Chakra Petch', sans-serif;
+  font-family: 'Chakra Petch', 'Inter', sans-serif;
   overflow: hidden;
   height: 100%;
   /* Prevent scrolling on main body */
