@@ -4,13 +4,13 @@
 @tailwind utilities;
 
 /* Font Imports */
-@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Inter:wght@300;400;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;700&family=Share+Tech+Mono&family=Inter:wght@300;400;600&display=swap');
 
 html,
 body,
 app-root {
   background-color: transparent !important;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Chakra Petch', sans-serif;
   overflow: hidden;
   height: 100%;
   /* Prevent scrolling on main body */
