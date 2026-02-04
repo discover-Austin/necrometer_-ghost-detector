@@ -52,10 +52,18 @@ export class ToolkitComponent implements OnInit, OnDestroy {
 
   unlockFeature(feature: FeatureKey): void {
     this.monetization.unlockFeatureWithCredits(feature);
+    this.updateSpiritBoxState(feature);
   }
 
   grantAdUnlock(feature: FeatureKey): void {
     this.monetization.unlockFeatureWithAd(feature);
+    this.updateSpiritBoxState(feature);
+  }
+
+  private updateSpiritBoxState(feature: FeatureKey): void {
+    if (feature === 'spiritBox') {
+      this.spiritBox.isActive.set(this.spiritBoxUnlocked());
+    }
   }
 
   toggleSession(): void {
