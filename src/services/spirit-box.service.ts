@@ -37,6 +37,23 @@ const DICTIONARY = [
   'trace',
   'still',
   'signal',
+  'latch',
+  'below',
+  'static',
+  'quiet',
+  'faint',
+  'shadow',
+  'remain',
+  'lumen',
+  'glance',
+  'hush',
+  'crawl',
+  'sight',
+  'soft',
+  'frozen',
+  'edge',
+  'radius',
+  'open',
 ];
 
 @Injectable({
@@ -87,7 +104,7 @@ export class SpiritBoxService {
       return;
     }
 
-    const gate = 0.12 + intensity * 0.4;
+    const gate = 0.1 + intensity * 0.5;
     if (Math.random() > gate) {
       return;
     }

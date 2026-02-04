@@ -77,7 +77,7 @@ See [`src/architecture.md`](src/architecture.md) for a module diagram of the sen
 
 ## 🖼️ Screenshots
 
-- Field Toolkit View: ![Toolkit view](https://github.com/user-attachments/assets/ec904b69-e584-428b-9ece-6d8cfcc8776b)
+- Field Toolkit View: ![Toolkit view](https://github.com/user-attachments/assets/7a8173f9-5240-4fb9-82c4-fe30128a2b1c)
 
 ## ❌ Removed Features
 

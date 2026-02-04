@@ -105,6 +105,9 @@
           Export JSON
         </button>
       </div>
+      <div class="text-xs text-spectral-500">
+        Export is available with the Session Export unlock or Pro access.
+      </div>
       <div class="space-y-2 max-h-[360px] overflow-y-auto">
         @for (session of sessionLog.sessions(); track session.id) {
           <div class="bg-black/40 border border-spectral-900/50 rounded-lg p-3 text-xs font-mono space-y-1">
@@ -119,6 +122,9 @@
             <div class="text-spectral-600">
               Words: {{ session.words.length }} | Duration:
               {{ session.endedAt ? ((session.endedAt - session.startedAt) / 60000 | number:'1.0-1') : 0 }} min
+            </div>
+            <div class="text-spectral-700">
+              Last note: {{ session.events[session.events.length - 1]?.detail ?? 'No events logged yet.' }}
             </div>
           </div>
         }

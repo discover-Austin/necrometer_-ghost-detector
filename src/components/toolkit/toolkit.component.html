@@ -72,6 +72,15 @@
   </div>
 
   <div class="flex-1 overflow-y-auto mt-3 space-y-4">
+    @if (monetization.adsEnabled()) {
+      <div class="glass-panel p-3 text-xs text-spectral-500 flex items-center justify-between">
+        <span>Sponsored: Watch a short ad to unlock premium tools for 20 minutes.</span>
+        <button class="px-3 py-1 rounded-full border border-spectral-500/40 text-xs font-mono"
+          (click)="grantAdUnlock('audioAnalyzer')">
+          Unlock Audio
+        </button>
+      </div>
+    }
     @if (activePanel() === 'emf') {
       <div class="glass-panel p-4">
         <div class="flex items-center justify-between">
@@ -159,6 +168,9 @@
             <button class="px-3 py-1 text-xs rounded-full border border-spectral-500/50" (click)="grantAdUnlock('audioAnalyzer')">Sponsor Unlock</button>
           </div>
         }
+        <div class="text-xs text-spectral-500">
+          Status: {{ audioAnalyzer.isActive() ? 'Listening' : 'Idle' }} · Mic {{ permissionService.status().microphone }}
+        </div>
         <div class="flex gap-3 mt-3">
           <div class="flex-1">
             <p class="text-xs text-spectral-600">Low</p>
@@ -193,6 +205,16 @@
           <div>
             <p class="text-spectral-600">Events Logged</p>
             <p class="text-spectral-200 font-mono">{{ sessionLog.getCurrentSummary()?.events.length ?? 0 }}</p>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 gap-3 text-xs">
+          <div>
+            <p class="text-spectral-600">Words Captured</p>
+            <p class="text-spectral-200 font-mono">{{ sessionLog.getCurrentSummary()?.words.length ?? 0 }}</p>
+          </div>
+          <div>
+            <p class="text-spectral-600">Motion Stability</p>
+            <p class="text-spectral-200 font-mono">{{ sensorService.stabilityScore() | number:'1.0-2' }}</p>
           </div>
         </div>
         <div class="space-y-2 max-h-48 overflow-y-auto">

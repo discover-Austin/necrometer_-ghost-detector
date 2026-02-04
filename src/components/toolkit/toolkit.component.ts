@@ -86,6 +86,7 @@ export class ToolkitComponent implements OnInit, OnDestroy {
       return;
     }
     await this.audioAnalyzer.start();
+    this.permissionService.updateMicrophone(this.audioAnalyzer.isActive() ? 'granted' : 'denied');
   }
 
   setTheme(mode: ThemeMode): void {
