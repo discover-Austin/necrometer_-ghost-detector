@@ -124,8 +124,8 @@ export class SessionLogService {
       session.words = session.words.slice(0, 30);
       this.currentSession.set({
         ...session,
-        events: [...session.events],
-        words: [...session.words],
+        events: session.events,
+        words: session.words,
       });
     }, 2500);
   }

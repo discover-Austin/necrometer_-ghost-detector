@@ -121,7 +121,7 @@
             </button>
           }
         </div>
-        @if (monetization.isFeatureUnlocked('spiritBox')) {
+        @if (spiritBoxUnlocked()) {
           <div class="text-xl font-mono text-ectoplasm-400">
             {{ spiritBox.latestWord()?.word ?? '...' }}
           </div>
