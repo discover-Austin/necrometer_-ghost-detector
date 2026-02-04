@@ -64,8 +64,11 @@ export class SessionLogService {
   endSession(): void {
     const session = this.currentSession();
     if (!session) return;
-    session.endedAt = Date.now();
-    this.sessions.update(list => [session, ...list].slice(0, 20));
+    const endedSession: SessionSummary = {
+      ...session,
+      endedAt: Date.now(),
+    };
+    this.sessions.update(list => [endedSession, ...list].slice(0, 20));
     this.currentSession.set(null);
     this.spiritBox.stop();
     this.emfLog.stop();
@@ -119,6 +122,11 @@ export class SessionLogService {
 
       session.events = session.events.slice(0, 80);
       session.words = session.words.slice(0, 30);
+      this.currentSession.set({
+        ...session,
+        events: [...session.events],
+        words: [...session.words],
+      });
     }, 2500);
   }
 

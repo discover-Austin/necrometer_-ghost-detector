@@ -11,7 +11,7 @@
     "sync:ios": "npx cap sync ios",
     "open:ios": "npx cap open ios",
     "cap:sync": "npx cap sync",
-    "lint": "npx -p @angular/cli@^20 ng lint",
+    "lint": "npx eslint \"src/**/*.ts\"",
     "test": "echo \"Tests coming soon\" && exit 0"
   },
   "dependencies": {
