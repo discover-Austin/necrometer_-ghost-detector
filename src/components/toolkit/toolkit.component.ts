@@ -1,4 +1,4 @@
-import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, signal } from '@angular/core';
+import { Component, ChangeDetectionStrategy, inject, OnInit, OnDestroy, signal, effect } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { DeviceStateService } from '../../services/device-state.service';
 import { SensorService } from '../../services/sensor.service';
@@ -31,6 +31,13 @@ export class ToolkitComponent implements OnInit, OnDestroy {
   permissionService = inject(PermissionService);
 
   activePanel = signal<'emf' | 'spirit' | 'audio' | 'session' | 'settings'>('emf');
+
+  constructor() {
+    effect(() => {
+      const unlocked = this.monetization.isFeatureUnlocked('spiritBox');
+      this.spiritBox.isActive.set(unlocked);
+    });
+  }
 
   ngOnInit(): void {
     this.sessionLog.startSession();

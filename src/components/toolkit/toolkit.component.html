@@ -121,17 +121,21 @@
             </button>
           }
         </div>
-        <div class="text-xl font-mono text-ectoplasm-400">
-          {{ spiritBox.latestWord()?.word ?? '...' }}
-        </div>
-        <div class="space-y-2 max-h-40 overflow-y-auto">
-          @for (word of spiritBox.wordLog(); track word.timestamp) {
-            <div class="flex items-center justify-between text-xs text-spectral-500">
-              <span class="uppercase tracking-wider">{{ word.word }}</span>
-              <span>{{ word.timestamp | date:'HH:mm:ss' }}</span>
-            </div>
-          }
-        </div>
+        @if (monetization.isFeatureUnlocked('spiritBox')) {
+          <div class="text-xl font-mono text-ectoplasm-400">
+            {{ spiritBox.latestWord()?.word ?? '...' }}
+          </div>
+          <div class="space-y-2 max-h-40 overflow-y-auto">
+            @for (word of spiritBox.wordLog(); track word.timestamp) {
+              <div class="flex items-center justify-between text-xs text-spectral-500">
+                <span class="uppercase tracking-wider">{{ word.word }}</span>
+                <span>{{ word.timestamp | date:'HH:mm:ss' }}</span>
+              </div>
+            }
+          </div>
+        } @else {
+          <div class="text-xs text-spectral-500">Spirit box locked. Unlock to view word stream.</div>
+        }
       </div>
     }
 
