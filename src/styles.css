@@ -3,7 +3,7 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Font Imports (runtime loading; production build disables inlining to avoid CI 403s) */
+/* Font Imports (runtime loading; Chakra Petch primary, Inter secondary; avoid Google Fonts 403s in CI/CD by disabling inlining) */
 @import url('https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;700&family=Share+Tech+Mono&family=Inter:wght@300;400;600&display=swap');
 
 html,
