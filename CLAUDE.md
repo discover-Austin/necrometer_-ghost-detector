@@ -10,8 +10,8 @@ This document provides exhaustive context for AI assistants working on the Necro
 2. [Core Philosophy](#core-philosophy)
 3. [Technology Stack](#technology-stack)
 4. [Directory Structure](#directory-structure)
-5. [All Services (24 Total)](#all-services-24-total)
-6. [All Components (4 Total)](#all-components-4-total)
+5. [All Services (31 Total)](#all-services-31-total)
+6. [All Components (5 Total)](#all-components-5-total)
 7. [Build Commands](#build-commands)
 8. [Known Issues and Errors](#known-issues-and-errors)
 9. [Security Vulnerabilities](#security-vulnerabilities)
@@ -36,10 +36,20 @@ This document provides exhaustive context for AI assistants working on the Necro
 ### What This App Does
 
 1. **Vision Scanner**: Live camera feed with subtle visual anomalies (blur, shadow, distortion, edge artifacts)
-2. **Anomaly Detection**: Autonomous detection based on sensor readings with 4 gating conditions
-3. **System Logbook**: Records and displays detected anomaly events
-4. **Credit Store**: In-app purchase simulation for credits and Pro subscription
-5. **Toast Notifications**: User feedback system
+2. **Anomaly Detection**: Autonomous detection based on sensor readings with 6 gating conditions
+3. **Toolkit**: EMF monitoring, spirit box, audio analyzer, session controls, and settings
+4. **System Logbook**: Records and displays detected anomaly events and investigation sessions
+5. **Credit Store**: In-app purchase simulation for credits, Pro subscription, and feature unlocks
+6. **Toast Notifications**: User feedback system
+
+### Navigation (4 Views)
+
+```
+vision   -> VisionComponent   (camera + ambient instability + anomaly display)
+toolkit  -> ToolkitComponent  (EMF, spirit box, audio analyzer, sessions, settings)
+logbook  -> LogbookComponent  (anomaly events + session timeline + export)
+store    -> UpgradeComponent  (credits + Pro subscription + feature unlocks)
+```
 
 ---
 
@@ -88,34 +98,45 @@ These principles guide all development decisions:
 ```
 necrometer_-ghost-detector/
 ├── src/
-│   ├── app.component.ts              # Root component (117 lines)
-│   ├── app.component.html            # Main layout with header/footer/views
-│   ├── main.ts                       # Bootstrap with zoneless CD
+│   ├── app.component.ts              # Root component (187 lines)
+│   ├── app.component.html            # Main layout with header/footer/views/onboarding
+│   ├── main.ts                       # Bootstrap with zoneless CD + HttpClient
 │   ├── polyfills.ts                  # Browser polyfills
-│   ├── types.ts                      # TypeScript interfaces (INCOMPLETE - see issues)
-│   ├── styles.css                    # Global styles (218 lines)
+│   ├── types.ts                      # TypeScript interfaces (complete)
+│   ├── styles.css                    # Global styles
 │   ├── index.html                    # HTML entry point
 │   │
 │   ├── components/
 │   │   ├── vision/
-│   │   │   ├── vision.component.ts   # Camera scanner (156 lines)
+│   │   │   ├── vision.component.ts   # Camera scanner (163 lines)
 │   │   │   ├── vision.component.html # Scanner template
-│   │   │   └── vision.component.css  # Anomaly animations (149 lines)
+│   │   │   └── vision.component.css  # Anomaly animations
+│   │   ├── toolkit/
+│   │   │   ├── toolkit.component.ts  # Toolkit panels (101 lines)
+│   │   │   ├── toolkit.component.html
+│   │   │   └── toolkit.component.css
 │   │   ├── logbook/
-│   │   │   ├── logbook.component.ts  # Event log (33 lines)
+│   │   │   ├── logbook.component.ts  # Event log + sessions (69 lines)
 │   │   │   └── logbook.component.html
 │   │   ├── upgrade/
-│   │   │   ├── upgrade.component.ts  # Store/credits (21 lines)
+│   │   │   ├── upgrade.component.ts  # Store/credits (27 lines)
 │   │   │   └── upgrade.component.html
 │   │   └── toast/
 │   │       └── toast.component.ts    # Toast notifications (126 lines)
 │   │
-│   └── services/                     # 24 services total
+│   └── services/                     # 31 services total
 │       ├── anomaly-detection.service.ts
 │       ├── sensor.service.ts
 │       ├── device-state.service.ts
+│       ├── camera-analysis.service.ts   # NEW
 │       ├── gemini.service.ts
 │       ├── audio.service.ts
+│       ├── audio-analyzer.service.ts    # NEW
+│       ├── spirit-box.service.ts        # NEW
+│       ├── emf-log.service.ts           # NEW
+│       ├── session-log.service.ts       # NEW
+│       ├── monetization.service.ts      # NEW
+│       ├── permission.service.ts        # NEW
 │       ├── persistence.service.ts
 │       ├── cache.service.ts
 │       ├── theme.service.ts
@@ -137,7 +158,7 @@ necrometer_-ghost-detector/
 │       └── toast.service.ts
 │
 ├── server/                           # Express.js proxy server
-│   ├── index.js                      # Main server
+│   ├── index.js                      # Main server (rate limiting, JWT auth)
 │   ├── issue-token-cli.js            # JWT CLI tool
 │   ├── package.json                  # Server dependencies
 │   ├── __tests__/                    # Jest unit tests
@@ -154,7 +175,8 @@ necrometer_-ghost-detector/
 │   ├── capacitor.config.ts
 │   ├── tailwind.config.js
 │   ├── .eslintrc.json
-│   └── .prettierrc
+│   ├── .prettierrc
+│   └── metadata.json
 │
 └── Documentation:
     ├── README.md
@@ -165,15 +187,16 @@ necrometer_-ghost-detector/
 
 ---
 
-## All Services (24 Total)
+## All Services (31 Total)
 
 ### Core Detection Services
 
 | Service | File | Purpose |
 |---------|------|---------|
-| **AnomalyDetectionService** | `anomaly-detection.service.ts` | Core autonomous detection with 4 gating conditions: cooldown (90-180s), sensor variance threshold, user stillness, probability gate |
-| **SensorService** | `sensor.service.ts` | Device orientation, motion (accelerometer), magnetometer access. Handles iOS permission requests |
-| **DeviceStateService** | `device-state.service.ts` | EMF reading computation with baseline adaptation and exponential smoothing |
+| **AnomalyDetectionService** | `anomaly-detection.service.ts` | Core autonomous detection with 6 gating conditions (see Patterns section). Runs 500ms check loop |
+| **SensorService** | `sensor.service.ts` | Device orientation, motion (accelerometer), magnetometer access. Tracks deviation count and stability score. Handles iOS permission requests |
+| **DeviceStateService** | `device-state.service.ts` | EMF reading computation with baseline adaptation and exponential smoothing. Tracks highest EMF |
+| **CameraAnalysisService** | `camera-analysis.service.ts` | Visual noise scoring via frame analysis (brightness change, edge density). Captures frames every 500ms. Smoothed score (0-1) feeds into anomaly gate 5 |
 
 ### AI Services
 
@@ -185,8 +208,25 @@ necrometer_-ghost-detector/
 
 | Service | File | Purpose |
 |---------|------|---------|
-| **AudioService** | `audio.service.ts` | Sound effects (UI click, detection, success, contain) and static noise. Voice recording via capacitor-voice-recorder |
+| **AudioService** | `audio.service.ts` | Sound effects (UI click, detection, success, contain) and static noise. Static level tied to EMF reading. Voice recording via capacitor-voice-recorder |
+| **AudioAnalyzerService** | `audio-analyzer.service.ts` | Web Audio API integration. Captures microphone input and computes frequency spectrum (low/mid/high bands). Feature-gated by MonetizationService |
+| **SpiritBoxService** | `spirit-box.service.ts` | AI-free word generation from 42-word dictionary. EMF-gated emission: higher EMF = higher chance and shorter cooldown. Word log persisted in localStorage (max 40 entries) |
 | **HapticService** | `haptic.service.ts` | Tactile feedback patterns: light/medium/heavy impacts, paranormalPulse(), containmentSuccess() |
+
+### Session & Logging Services
+
+| Service | File | Purpose |
+|---------|------|---------|
+| **SessionLogService** | `session-log.service.ts` | Investigation session management. Tracks EMF spikes (>65), motion interference (<0.6 stability), spirit box words. Stores up to 20 sessions. 2.5s watcher interval |
+| **EmfLogService** | `emf-log.service.ts` | EMF history tracking with 2-second intervals. Stores up to 120 entries. Peak EMF calculation. Persisted to localStorage |
+| **InvestigationSessionService** | `investigation-session.service.ts` | Session management with location, detections, notes, statistics |
+
+### Monetization Services
+
+| Service | File | Purpose |
+|---------|------|---------|
+| **MonetizationService** | `monetization.service.ts` | Feature unlock system with credits. Features: spiritBox (20 NC), audioAnalyzer (15 NC), exportLogs (10 NC), premiumThemes (10 NC). Supports permanent credit unlocks and temporary 20-minute ad unlocks. Pro subscription grants all features |
+| **UpgradeService** | `upgrade.service.ts` | Credit system (starts with 15 NC), Pro subscription simulation, credit spending/adding |
 
 ### Data Services
 
@@ -194,8 +234,7 @@ necrometer_-ghost-detector/
 |---------|------|---------|
 | **PersistenceService** | `persistence.service.ts` | localStorage management for detected entities |
 | **CacheService** | `cache.service.ts` | In-memory cache with TTL (5 min default), 100 item max, LRU eviction |
-| **ExportImportService** | `export-import.service.ts` | JSON/CSV export and import of detection data |
-| **InvestigationSessionService** | `investigation-session.service.ts` | Session management with location, detections, notes, statistics |
+| **ExportImportService** | `export-import.service.ts` | JSON/CSV export and import of detection data. Export gated by MonetizationService |
 | **SchedulerService** | `scheduler.service.ts` | Task scheduling with rrule support for recurring events |
 
 ### Platform Services
@@ -204,9 +243,10 @@ necrometer_-ghost-detector/
 |---------|------|---------|
 | **NetworkService** | `network.service.ts` | Online/offline detection with Capacitor Network plugin |
 | **GeolocationService** | `geolocation.service.ts` | Location tracking with Haversine distance calculation |
-| **ThemeService** | `theme.service.ts` | Dark/light/auto mode with system preference detection |
-| **EnvironmentService** | `environment.service.ts` | Environment detection (dev/prod/native/mobile), storage helpers |
+| **ThemeService** | `theme.service.ts` | Dark/light/auto mode with system preference detection. Non-auto modes gated by premiumThemes feature |
+| **EnvironmentService** | `environment.service.ts` | Environment detection (dev/prod/native/mobile), storage helpers with `necrometer.` prefix |
 | **ShareService** | `share.service.ts` | Native sharing of entities and reports |
+| **PermissionService** | `permission.service.ts` | Tracks permission states (sensors/camera/microphone) and onboarding completion. Persisted to localStorage |
 
 ### Monitoring Services
 
@@ -222,44 +262,56 @@ necrometer_-ghost-detector/
 | Service | File | Purpose |
 |---------|------|---------|
 | **ToastService** | `toast.service.ts` | Toast notifications (success, error, warning, info) with auto-dismiss |
-| **UpgradeService** | `upgrade.service.ts` | Credit system (starts with 15), Pro subscription simulation |
 | **AchievementService** | `achievement.service.ts` | 10 achievements across 4 categories (detection, containment, exploration, mastery) |
 | **OfflineQueueService** | `offline-queue.service.ts` | Queues API requests when offline, syncs when restored |
 
 ---
 
-## All Components (4 Total)
+## All Components (5 Total)
 
 ### AppComponent (Root)
-- **File**: `src/app.component.ts`
+- **File**: `src/app.component.ts` (187 lines)
 - **Selector**: `app-root`
-- **Views**: vision, logbook, store
-- **Features**: View switching with animations, global static/noise overlays, new detection badge
+- **Views**: vision, toolkit, logbook, store
+- **Features**: View switching with fade animations, keyboard navigation (Arrow keys, Enter/Space), new detection badge, onboarding overlay, audio initialization on first interaction, skip-to-main accessibility link
 
 ### VisionComponent
-- **File**: `src/components/vision/vision.component.ts`
+- **File**: `src/components/vision/vision.component.ts` (163 lines)
 - **Selector**: `app-vision`
 - **Features**:
-  - Live camera feed via CameraPreview
-  - Ambient instability (brightness fluctuation, noise, chromatic aberration)
+  - Live camera feed via CameraPreview (rear camera)
+  - Ambient instability (brightness fluctuation, noise opacity, chromatic aberration at ~60fps)
   - Anomaly manifestations (blur, shadow, distortion, edge-artifact)
   - Minimal HUD with EMF reading
-  - Acknowledgment toast after anomaly detection
+  - App state listener to restart camera on resume
+  - Permission status updates for camera
+
+### ToolkitComponent
+- **File**: `src/components/toolkit/toolkit.component.ts` (101 lines)
+- **Selector**: `app-toolkit`
+- **Panels**: emf, spirit, audio, session, settings
+- **Features**:
+  - EMF panel: Real-time EMF readings from EmfLogService
+  - Spirit box panel: Word emission display, feature-gated (20 NC or ad unlock)
+  - Audio analyzer panel: Frequency spectrum (low/mid/high), feature-gated (15 NC)
+  - Session panel: Start/end investigation sessions, session status
+  - Settings panel: Theme switching (auto free, light/dark gated as premiumThemes)
+  - Auto-starts session and EMF logging on init
 
 ### LogbookComponent
-- **File**: `src/components/logbook/logbook.component.ts`
+- **File**: `src/components/logbook/logbook.component.ts` (69 lines)
 - **Selector**: `app-logbook`
-- **Features**: Event list with collapsible details, timestamp/type/duration/position display
+- **Features**: Two tabs (anomalies/sessions), event list with collapsible details, timestamp/type/duration/position display, session timeline, export functionality (gated by exportLogs feature)
 
 ### UpgradeComponent
-- **File**: `src/components/upgrade/upgrade.component.ts`
+- **File**: `src/components/upgrade/upgrade.component.ts` (27 lines)
 - **Selector**: `app-upgrade`
-- **Features**: Credit balance display, credit packs ($0.99/$1.99/$4.99), Pro subscription ($4.99/mo)
+- **Features**: Credit balance display, credit packs ($0.99/$1.99/$4.99), Pro subscription ($4.99/mo), individual feature unlock buttons via MonetizationService
 
 ### ToastComponent
-- **File**: `src/components/toast/toast.component.ts`
+- **File**: `src/components/toast/toast.component.ts` (126 lines)
 - **Selector**: `app-toast`
-- **Features**: Slide-in animations, dismissible, auto-timeout, color-coded by type
+- **Features**: Slide-in animations, dismissible, auto-timeout, color-coded by type (success/error/warning/info), icon support
 
 ---
 
@@ -267,8 +319,8 @@ necrometer_-ghost-detector/
 
 ```bash
 # Development
-npm run dev              # Start dev server (localhost:3000)
-npm run lint             # Run ESLint (CURRENTLY BROKEN - needs angular-eslint)
+npm run dev              # Start dev server
+npm run lint             # Run ESLint (working - uses typescript-eslint)
 
 # Production
 npm run build            # Standard build
@@ -289,84 +341,29 @@ npx tsc --noEmit         # Type check only (passes)
 
 ## Known Issues and Errors
 
-### Critical Build Errors
+### Build Warnings
 
 1. **Font Inlining Failure (403)**
    - **Error**: `Inlining of fonts failed. https://fonts.googleapis.com/css2?family=Chakra+Petch returned status code: 403`
    - **Location**: `src/index.html:12`
-   - **Impact**: Production build fails in some CI environments
+   - **Impact**: Production build may warn/fail in some CI environments
    - **Fix Options**:
      - Disable font inlining in `angular.json` with `"optimization": { "fonts": false }`
      - Host fonts locally
      - Use different font loading strategy
 
-2. **ESLint Not Configured for Angular**
-   - **Error**: `Cannot find "lint" target for the specified project`
-   - **Impact**: `npm run lint` fails
-   - **Fix**: Run `ng add angular-eslint`
-
-### Missing Type Definitions
-
-The `src/types.ts` file is incomplete. These types are imported by `gemini.service.ts` but don't exist:
-
-```typescript
-// Add these to src/types.ts:
-
-export interface TemporalEcho {
-  title: string;
-  era: string;
-  description: string;
-}
-
-export interface EVPAnalysis {
-  transcription: string;
-  confidence: number;
-}
-
-export interface CrossReferenceResult {
-  match: boolean;
-  details: string;
-}
-
-export interface EmotionalResonanceResult {
-  emotions: string[];
-  summary: string;
-}
-
-export interface ContainmentRitual {
-  steps: string[];
-  outcome: string;
-}
-
-export interface SceneAnalysisResult {
-  objects: SceneObject[];
-}
-
-export interface SceneObject {
-  name: string;
-  polylines: Array<Array<{x: number; y: number}>>;
-}
-
-// For scheduler.service.ts:
-export interface Schedule {
-  id: string;
-  name?: string;
-  enabled?: boolean;
-  rrule?: string;
-  intervalMs?: number;
-  lastRun?: string;
-  nextRun?: string;
-}
-```
-
-### CI/CD Issues
-
-1. **Duplicate CI Workflow**: `.github/workflows/ci.yml` contains two workflow definitions merged together (lines 1-27 and 28-86) - needs cleanup
-
 ### Minor Code Issues
 
-1. **Unused Import**: `Renderer2` imported but not used in `app.component.ts`
-2. **Any Types**: Several services use `any` type (e.g., `magnetometerSensor: any` in sensor.service.ts)
+1. **Any Types**: Several services use `any` type (e.g., `magnetometerSensor: any` in sensor.service.ts, `analysisInterval: any` in camera-analysis.service.ts)
+
+### Resolved Issues
+
+The following issues from previous versions have been fixed:
+
+- ~~Missing type definitions in `src/types.ts`~~ - All types now complete
+- ~~ESLint not configured~~ - Now working with `@typescript-eslint` and `eslint-config-prettier`
+- ~~Duplicate CI workflow~~ - `ci.yml` is now clean with proper job structure
+- ~~Unused Renderer2 import~~ - Removed from `app.component.ts`
 
 ---
 
@@ -455,15 +452,48 @@ chore: maintenance tasks
 
 ## Patterns and Best Practices
 
-### Anomaly Detection Gating (4 conditions)
+### Anomaly Detection Gating (6 conditions)
+
+All 6 conditions must pass for an anomaly to trigger:
 
 ```typescript
-// All 4 conditions must pass:
-1. Cooldown: 90-180 seconds since last anomaly (randomized)
-2. Sensor variance: At least 2 sensors showing variance > 1.5x baseline
-3. User stillness: Device motion magnitude < 0.5
-4. Probability: Random gate that accumulates 0.01 per check
+// Gate 1: Cooldown - 90-180 seconds since last anomaly (randomized)
+// Gate 2: Attention level - Accumulated threshold (>0.55), increments +0.004 per tick
+// Gate 3: Stability score - Device stillness from SensorService (>0.72)
+// Gate 4: Deviation count - 2+ sensors with variance (>0.15 deviation)
+// Gate 5: Visual noise - CameraAnalysisService score between 0.12-0.45
+// Gate 6: Random probability - attentionLevel * 0.035 chance per tick
 ```
+
+After triggering:
+1. Render delay: 220-680ms before showing anomaly
+2. Display duration: 700-1100ms
+3. Acknowledgment delay: 350-650ms after display ends
+4. Attention drops by 0.65, cooldown starts (90-180s random)
+
+### Monetization Gating Pattern
+
+```typescript
+// Check feature access before enabling functionality
+if (!this.monetization.isFeatureUnlocked('spiritBox')) {
+  this.toast.warning('Feature locked.');
+  return;
+}
+
+// Unlock methods:
+// 1. Credit purchase (permanent): monetization.unlockFeatureWithCredits(feature)
+// 2. Ad unlock (20 minutes): monetization.unlockFeatureWithAd(feature)
+// 3. Pro subscription (all features): upgrade.subscribeToPro()
+```
+
+### Feature Costs (Necro-Credits)
+
+| Feature | Cost (NC) | Description |
+|---------|-----------|-------------|
+| spiritBox | 20 | Spirit Box word emission |
+| audioAnalyzer | 15 | Audio frequency spectrum |
+| exportLogs | 10 | Session/log export |
+| premiumThemes | 10 | Light/dark theme modes |
 
 ### Service Injection Pattern
 
@@ -503,6 +533,11 @@ this.env.getStorageItem('key');
 | distortion | Expanding ripple | `.anomaly-distortion` |
 | edge-artifact | Edge lighting contradiction | `.anomaly-edge-artifact` |
 
+### Spirit Box Dictionary
+
+42 unique words used for spirit box emission (clinical/ambiguous tone):
+`whisper`, `through`, `signal`, `behind`, `silence`, `listen`, `cold`, `north`, `stay`, `leave`, `beneath`, `close`, `echo`, `hold`, `drift`, `open`, `follow`, `wait`, `near`, `lost`, `return`, `veil`, `hollow`, `memory`, `trace`, `still`, `latch`, `below`, `static`, `quiet`, `faint`, `shadow`, `remain`, `lumen`, `glance`, `hush`, `crawl`, `sight`, `soft`, `frozen`, `edge`, `radius`
+
 ---
 
 ## Testing Status
@@ -523,16 +558,12 @@ this.env.getStorageItem('key');
 
 ### GitHub Actions Workflows
 
-**ci.yml** (needs fixing - has duplicate content):
-1. Checkout code
-2. Setup Node.js 20
-3. Install dependencies
-4. TypeScript check (`npx tsc --noEmit`)
-5. Run server tests
-6. Angular production build
+**ci.yml** (2 jobs, clean structure):
+1. **server-tests**: Install server deps, run Jest tests with dummy env vars
+2. **client-build** (depends on server-tests): Install root deps, TypeScript check, ESLint, Angular build
 
 **e2e.yml**:
-- Manual trigger for live integration tests
+- Manual trigger + PR-based for live integration tests
 - Requires secrets: `GENAI_API_KEY`, `JWT_ISSUER_SECRET`, `SHARED_ISSUANCE_TOKEN`
 
 ---
@@ -596,10 +627,14 @@ gemini.setProxyConfig('https://your-proxy.com', 'shared-token');
 
 | Endpoint | Method | Purpose |
 |----------|--------|---------|
-| `/issue-token` | POST | Get short-lived JWT |
+| `/issue-token` | POST | Get short-lived JWT (15 min) |
+| `/health` | GET | Health check |
 | `/api/generate-entity-profile` | POST | Entity generation |
 | `/api/analyze-scene` | POST | Scene analysis |
 | `/api/temporal-echo` | POST | Temporal echo |
+| `/transcribe` | POST | Audio transcription (501 not implemented) |
+
+**Server Features**: Rate limiting (60 req/min/IP), JWT-based auth middleware, CORS, Helmet security headers.
 
 ---
 
@@ -615,6 +650,8 @@ gemini.setProxyConfig('https://your-proxy.com', 'shared-token');
 6. **Add missing types** to `src/types.ts` when needed
 7. **Use EnvironmentService** for storage operations
 8. **Handle permissions gracefully** with fallbacks
+9. **Use MonetizationService** to gate premium features
+10. **Use LoggerService** for structured logging
 
 ### DON'T
 
@@ -624,15 +661,14 @@ gemini.setProxyConfig('https://your-proxy.com', 'shared-token');
 4. **Don't use theatrical language** - Keep it clinical
 5. **Don't add Zone.js** - App uses zoneless change detection
 6. **Don't skip error handling** - Always catch and log errors
+7. **Don't bypass monetization gates** - Respect the feature unlock system
 
 ### Priority Fixes Needed
 
-1. **HIGH**: Fix missing type definitions in `src/types.ts`
-2. **HIGH**: Run `npm audit fix` for security vulnerabilities
-3. **MEDIUM**: Fix font inlining build error
-4. **MEDIUM**: Fix duplicate CI workflow in `.github/workflows/ci.yml`
-5. **LOW**: Configure angular-eslint for linting
-6. **LOW**: Add unit tests for core services
+1. **HIGH**: Run `npm audit fix` for security vulnerabilities
+2. **MEDIUM**: Fix font inlining build warning
+3. **LOW**: Add unit tests for core services
+4. **LOW**: Replace remaining `any` types with proper types
 
 ### Custom Tailwind Classes
 
@@ -676,6 +712,9 @@ npm run dev
 # Type check
 npx tsc --noEmit
 
+# Lint
+npm run lint
+
 # Before committing
 npm run build:prod
 
@@ -688,4 +727,4 @@ npm run build && npm run cap:sync
 
 ---
 
-*Last updated: 2026-02-03*
+*Last updated: 2026-02-05*
