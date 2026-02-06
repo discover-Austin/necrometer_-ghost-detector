@@ -89,11 +89,27 @@
        <div class="absolute inset-0 z-[60] bg-black/90 flex items-center justify-center p-6">
          <div class="max-w-md w-full glass-panel p-6 text-center space-y-4">
            <h2 class="text-xl font-bold text-spectral-300 font-mono">Field Access Briefing</h2>
-           <p class="text-sm text-spectral-500">
-             Necrometer uses real sensors, camera, and optional audio analysis. Grant access when
-             prompted for a full investigation experience.
-           </p>
-           <div class="text-xs text-spectral-600 grid grid-cols-2 gap-2">
+
+           <!-- Entertainment Disclaimer (Required for Play Store) -->
+           <div class="bg-amber-900/30 border border-amber-500/50 rounded-lg p-3">
+             <p class="text-xs text-amber-200 font-medium uppercase tracking-wide mb-1">Entertainment Only</p>
+             <p class="text-xs text-amber-100/80">
+               This application is for entertainment purposes only. It does not detect ghosts,
+               spirits, or paranormal activity. All readings are simulated for immersive gameplay.
+             </p>
+           </div>
+
+           <!-- Permission Rationale -->
+           <div class="text-left space-y-2">
+             <p class="text-xs text-spectral-400 font-medium uppercase tracking-wide">Why we need access:</p>
+             <ul class="text-xs text-spectral-500 space-y-1">
+               <li><span class="text-spectral-400">Camera:</span> Creates visual atmosphere effects and overlays</li>
+               <li><span class="text-spectral-400">Sensors:</span> Generates immersive readings based on device motion</li>
+               <li><span class="text-spectral-400">Microphone:</span> Optional sound-reactive visual animations</li>
+             </ul>
+           </div>
+
+           <div class="text-xs text-spectral-600 grid grid-cols-2 gap-2 pt-2 border-t border-spectral-800">
              <span>Camera: {{ permissionService.status().camera }}</span>
              <span>Sensors: {{ permissionService.status().sensors }}</span>
              <span>Microphone: {{ permissionService.status().microphone }}</span>
@@ -102,7 +118,7 @@
            <button
              class="w-full py-2 rounded-lg bg-spectral-600 text-white font-mono uppercase text-sm"
              (click)="completeOnboarding()">
-             Continue
+             I Understand - Continue
            </button>
          </div>
        </div>

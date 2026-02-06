@@ -578,11 +578,22 @@ npm run sync:android
 npm run open:android
 ```
 
-**Required Permissions** (AndroidManifest.xml):
-- `android.permission.CAMERA`
-- `android.permission.ACCESS_FINE_LOCATION`
-- `android.permission.RECORD_AUDIO`
-- `android.permission.VIBRATE`
+**AndroidManifest.xml Permissions** (minimal set for Play Store compliance):
+- `android.permission.INTERNET` - API communication
+- `android.permission.CAMERA` - Visual effects overlay
+- `android.permission.RECORD_AUDIO` - Sound-reactive features
+
+**Hardware Feature Declarations** (all optional):
+```xml
+<uses-feature android:name="android.hardware.camera" android:required="false"/>
+<uses-feature android:name="android.hardware.camera.autofocus" android:required="false"/>
+<uses-feature android:name="android.hardware.microphone" android:required="false"/>
+```
+
+**SDK Versions** (variables.gradle):
+- `minSdkVersion = 23`
+- `compileSdkVersion = 35`
+- `targetSdkVersion = 35`
 
 ### iOS
 
@@ -593,9 +604,50 @@ npm run open:ios
 ```
 
 **Info.plist Keys Required**:
-- `NSCameraUsageDescription`
-- `NSLocationWhenInUseUsageDescription`
-- `NSMicrophoneUsageDescription`
+- `NSCameraUsageDescription` - "Creates visual atmosphere effects"
+- `NSMicrophoneUsageDescription` - "Optional sound-reactive animations"
+
+---
+
+## Play Store Compliance
+
+This section documents critical requirements for Google Play Store approval.
+
+### Entertainment Disclaimer (REQUIRED)
+
+The app MUST clearly state it's for entertainment only:
+
+1. **In-app modal** (implemented in onboarding): Shows before permissions
+2. **Store description**: Must include disclaimer text
+3. **Privacy policy**: Required for apps using camera/microphone
+
+**Required store description text**:
+> This app is intended for entertainment purposes only and does not provide real paranormal detection.
+
+### Permissions Policy
+
+**DO NOT add these permissions** (will cause rejection):
+- `WRITE_EXTERNAL_STORAGE` - Not needed, blocked on Android 11+
+- `MODIFY_AUDIO_SETTINGS` - Flags "audio manipulation"
+- `ACCESS_FINE_LOCATION` - Only if actually needed
+
+**Pre-permission rationale UI**: Required for sensitive permissions (camera, microphone). Implemented in onboarding overlay explaining:
+- Camera → visual effects only
+- Microphone → sound-reactive animation only
+
+### Data Safety Form
+
+When submitting to Play Console, declare:
+- Data collected: NONE
+- Data shared: NONE
+- Audio recorded: NO (not stored)
+- Images stored: NO (not stored)
+
+### Package Name
+
+Current: `com.ghosted_necrometer.app`
+
+Note: Contains "ghost" which may flag paranormal review pipeline. Consider neutral alternative for future releases.
 
 ---
 
@@ -727,4 +779,4 @@ npm run build && npm run cap:sync
 
 ---
 
-*Last updated: 2026-02-05*
+*Last updated: 2026-02-06*
