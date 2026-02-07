@@ -9,6 +9,11 @@ A sophisticated paranormal activity scanner that simulates anomaly detection usi
 [![Capacitor](https://img.shields.io/badge/Capacitor-7.4-blue.svg)](https://capacitorjs.com)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.8-blue.svg)](https://www.typescriptlang.org)
 
+## 🗄️ Archive
+
+Legacy entry points, patch artifacts, and reference examples are separated into `_archive/` to keep
+the production build focused on the current `src/` code.
+
 ## ⚠️ Product Philosophy
 
 This app is **not** a real ghost detector. It is an **experiential scanner** designed to create ambiguity and restraint:
