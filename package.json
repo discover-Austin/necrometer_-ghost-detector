@@ -1,7 +1,7 @@
 {
   "name": "necrometer",
   "version": "1.0.0",
-  "description": "A sophisticated paranormal activity scanner.",
+  "description": "An entertainment app that creates visual and audio effects inspired by paranormal themes. This application is intended for entertainment purposes only and does not detect ghosts, spirits, or paranormal activity.",
   "scripts": {
     "dev": "npx -p @angular/cli@^20 ng serve",
     "build": "npx -p @angular/cli@^20 ng build",
