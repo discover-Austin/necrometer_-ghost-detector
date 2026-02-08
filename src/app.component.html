@@ -58,7 +58,9 @@
 
       @if (isLoading()) {
         <div class="relative z-10 flex items-center justify-center h-full" role="status" aria-live="polite">
-          <p class="text-spectral-400 font-mono text-xs tracking-[0.3em] uppercase animate-pulse">
+          <p
+            class="text-spectral-400 font-mono text-xs tracking-[0.2em] uppercase animate-pulse"
+            aria-label="Initializing systems">
             Initializing systems...
           </p>
         </div>
