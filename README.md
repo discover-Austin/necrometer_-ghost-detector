@@ -158,7 +158,14 @@ The following features have been intentionally removed:
    npm run sync:android
    ```
 
-3. **Open in Android Studio**:
+3. **Build Play Store bundle (AAB)**:
+   ```bash
+   cd android
+   ./gradlew bundleRelease
+   ```
+   Requires Java 21 for the current Android Gradle plugin.
+
+4. **Open in Android Studio**:
    ```bash
    npm run open:android
    ```

@@ -58,7 +58,9 @@
 
       @if (isLoading()) {
         <div class="relative z-10 flex items-center justify-center h-full" role="status" aria-live="polite">
-          <p class="text-spectral-400 font-mono">Loading...</p>
+          <p class="text-spectral-400 font-mono text-xs tracking-[0.3em] uppercase animate-pulse">
+            Initializing systems...
+          </p>
         </div>
       }
 
@@ -87,12 +89,15 @@
 
      @if (!permissionService.onboardingComplete()) {
        <div class="absolute inset-0 z-[60] bg-black/90 flex items-center justify-center p-6">
-         <div class="max-w-md w-full glass-panel p-6 text-center space-y-4">
-           <h2 class="text-xl font-bold text-spectral-300 font-mono">Field Access Briefing</h2>
-           <p class="text-sm text-spectral-500">
-             Necrometer uses real sensors, camera, and optional audio analysis. Grant access when
-             prompted for a full investigation experience.
-           </p>
+          <div class="max-w-md w-full glass-panel p-6 text-center space-y-4">
+            <h2 class="text-xl font-bold text-spectral-300 font-mono">Field Access Briefing</h2>
+            <p class="text-sm text-spectral-500">
+              Necrometer uses on-device sensors, camera, and optional audio analysis. Grant access
+              when prompted to enable full investigation features.
+            </p>
+            <p class="text-xs text-spectral-600">
+              For entertainment only. Necrometer does not detect real paranormal activity.
+            </p>
            <div class="text-xs text-spectral-600 grid grid-cols-2 gap-2">
              <span>Camera: {{ permissionService.status().camera }}</span>
              <span>Sensors: {{ permissionService.status().sensors }}</span>

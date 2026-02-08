@@ -2,7 +2,7 @@
   <div class="flex items-center justify-between mb-4">
     <div>
       <h2 class="text-2xl font-bold text-spectral-300 font-mono tracking-wider">FIELD TOOLKIT</h2>
-      <p class="text-xs text-spectral-600">Real-time instrumentation & session controls</p>
+      <p class="text-xs text-spectral-600">Real-time instrumentation and session controls</p>
     </div>
     <button
       (click)="toggleSession()"
@@ -24,7 +24,7 @@
       <div class="text-3xl font-bold text-ectoplasm-400 font-mono">
         {{ deviceState.highestEmf() | number:'1.0-0' }}
       </div>
-      <p class="text-xs text-spectral-600">session max</p>
+      <p class="text-xs text-spectral-600">Session max</p>
     </div>
   </div>
 
@@ -86,7 +86,7 @@
         <div class="flex items-center justify-between">
           <div>
             <h3 class="text-lg text-spectral-300 font-mono">EMF Trace</h3>
-            <p class="text-xs text-spectral-600">Filtered magnetometer output, updated every 100ms</p>
+            <p class="text-xs text-spectral-600">Filtered magnetometer output, updated every 100 ms</p>
           </div>
           <div class="text-xs text-spectral-500 font-mono">{{ deviceState.emfAvailable() ? 'Sensor online' : 'Sensor unavailable' }}</div>
         </div>
@@ -101,7 +101,7 @@
           }
         </div>
         <div class="mt-4 flex items-center justify-between">
-          <div class="text-xs text-spectral-600">Needle Calibration</div>
+          <div class="text-xs text-spectral-600">Needle calibration</div>
           <div class="text-xs text-spectral-400 font-mono">Stability {{ sensorService.stabilityScore() | number:'1.0-2' }}</div>
         </div>
         <div class="mt-2 relative h-16">
